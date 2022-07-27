@@ -1,0 +1,68 @@
+version: '3.4'
+
+services:
+  MissionCriticalDemo.DispatchApi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    ports:
+      - "5133:80"
+      - "7079:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  MissionCriticalDemo.PlantApi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+    ports:
+      - "5071:80"
+      - "7071:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  mongodb:
+    container_name: stateserver
+    image: mongo:5.0.6
+    restart: always
+    ports:
+      - 27017:27017
+    networks:
+      - mission-critical-network
+
+  mongoexpress:
+    container_name: stateviewer
+    image: mongo-express
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=stateserver
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    ports:
+      - 8081:8081
+    networks:
+      - mission-critical-network
+
+  redis:
+    container_name: "redis_service"
+    image: "redis"
+    ports:
+      - "6378:6379"
+    networks:
+      - mission-critical-network
+
+  redisinsights:
+    image: "redislabs/redisinsight"
+    ports:
+      - "8001:8001"
+    networks:
+      - mission-critical-network
+
+  zipkin:
+    container_name: "zipkin"
+    image: "openzipkin/zipkin:2.23.4"
+    ports:
+      - 9412:9411
+    networks:
+      - mission-critical-network

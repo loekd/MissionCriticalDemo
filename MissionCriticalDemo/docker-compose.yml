@@ -1,0 +1,59 @@
+version: '3.4'
+
+services:
+  MissionCriticalDemo.DispatchApi:
+    image: ${DOCKER_REGISTRY-}missioncriticaldemo.dispatchapi
+    build:
+      context: .
+      dockerfile: MissionCriticalDemo.DispatchApi/Dockerfile
+    environment:
+      - DAPR_HTTP_PORT=3500
+    networks:
+      - mission-critical-network
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+
+  MissionCriticalDemo.DispatchApi-dapr:
+    image: "daprio/daprd:1.6.0"
+    command: [
+      "./daprd",
+     "-app-id", "dispatch_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/components/config.yaml"
+     ]
+    volumes:
+      - "./components/:/components"
+    depends_on:
+      - MissionCriticalDemo.DispatchApi
+    network_mode: "service:MissionCriticalDemo.DispatchApi"
+
+  MissionCriticalDemo.PlantApi:
+    image: ${DOCKER_REGISTRY-}missioncriticaldemo.plantapi
+    build:
+      context: .
+      dockerfile: MissionCriticalDemo.PlantApi/Dockerfile
+    environment:
+      - DAPR_HTTP_PORT=3500
+    networks:
+      - mission-critical-network
+
+  MissionCriticalDemo.PlantApi-dapr:
+    image: "daprio/daprd:1.6.0"
+    command: [
+      "./daprd",
+     "-app-id", "plant_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/components/config.yaml"
+     ]
+    volumes:
+      - "./components/:/components"
+    depends_on:
+      - MissionCriticalDemo.PlantApi
+    network_mode: "service:MissionCriticalDemo.PlantApi"
+
+
+networks:
+    mission-critical-network:

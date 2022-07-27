@@ -1,0 +1,27 @@
+﻿@page "/dispatch"
+@inherits StatusModel
+@using MissionCriticalDemo.Shared
+@using MissionCriticalDemo.Shared.Enums
+@using MissionCriticalDemo.FrontEnd.Shared
+
+<PageTitle>Requests</PageTitle>
+
+<MudTextField @bind-Value="GasInStore" Label="Current Gas in Store (GWh)" ReadOnly="true"></MudTextField>
+
+<MudCard>
+    <MudCardContent>
+        <MudText>Submit a request</MudText>
+        <MudText Typo="Typo.body2">Request injection or withdrawal.</MudText>
+
+        <MudRadioGroup @bind-SelectedOption="Direction">
+            <MudRadio Option="FlowDirection.Inject" Color="Color.Primary" Size="Size.Small">Inject</MudRadio>
+            <MudRadio Option="FlowDirection.Witdraw" Color="Color.Primary" Size="Size.Small">Withdraw</MudRadio>
+        </MudRadioGroup>
+
+        <MudTextField @bind-Value="Amount" Label="Amount (GWh)" Variant="Variant.Text"></MudTextField>
+
+    </MudCardContent>
+    <MudCardActions>
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="SubmitRequest">Submit request</MudButton>
+    </MudCardActions>
+</MudCard>

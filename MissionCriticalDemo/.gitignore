@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/MissionCriticalDemo/DesignTimeBuild
+/.vs/MissionCriticalDemo/FileContentIndex
+/.vs/MissionCriticalDemo/v17
+/.vs/ProjectEvaluation
+/.vs/MissionCriticalDemo/config
