@@ -30,7 +30,11 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         [HttpGet]
         public async Task<IActionResult> GetForCustomerId()
         {
-            int currentTotal = 0;
+            //fake buggy service
+            if (Random.Shared.Next(0, 11) <= 7) 
+                return StatusCode(StatusCodes.Status503ServiceUnavailable);
+
+            int currentTotal;
             _logger.LogTrace("Fetching gas in store for customer {CustomerId}", _userId);
             try
             {

@@ -1,12 +1,16 @@
 ﻿using MissionCriticalDemo.Shared.Contracts;
 using System.Net.Http.Json;
+using System.Text;
 
 namespace MissionCriticalDemo.FrontEnd.Services
 {
+    public interface IService
+    { }
+
     /// <summary>
     /// Processes dispatching interaction.
     /// </summary>
-    public interface IDispatchService
+    public interface IDispatchService : IService
     {
         Task SubmitRequest(Request request);
 
@@ -40,6 +44,16 @@ namespace MissionCriticalDemo.FrontEnd.Services
         {
             _logger.LogDebug("Fetching gas in store");
             return _httpClient.GetFromJsonAsync<int>(_gisEndpoint);
+        }
+
+        public static Task<HttpResponseMessage> FallbackGetCustomerGasInStore(Polly.Context context, CancellationToken cancellationToken)
+        {
+            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("-1", Encoding.UTF8, "application/json")
+            };
+
+            return Task.FromResult(response);
         }
     }
 }

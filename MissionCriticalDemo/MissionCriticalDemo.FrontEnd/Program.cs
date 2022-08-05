@@ -11,7 +11,10 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddHttpClient("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+builder.Services.AddHttpClient<DispatchService>("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+    .AddPolicyHandler((sp, msg) => Polly.Policy.WrapAsync(
+        PolicyBuilder.GetFallbackPolicy<DispatchService>(sp, DispatchService.FallbackGetCustomerGasInStore),
+        PolicyBuilder.GetRetryPolicy<DispatchService>(sp)))
     .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
 
 // Supply HttpClient instances that include access tokens when making requests to the server project

@@ -119,4 +119,22 @@ public partial class StatusModel : ComponentBase
             Logger!.LogError("Failed to submit request. Error: {ErrorMessage}", ex.Message);
         }
     }
+
+    protected async Task FetchGasInStore()
+    {
+        GasInStore = 0;
+        try
+        {
+            GasInStore = await DispatchService!.GetCustomerGasInStore();
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception ex)
+        {
+            Snackbar!.Add($"Fetch status failed: {ex.Message}", Severity.Warning);
+            Logger!.LogError("Failed to fetch status. Error: {ErrorMessage}", ex.Message);
+        }
+    }
 }
