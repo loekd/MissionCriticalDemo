@@ -66,3 +66,20 @@ services:
       - 9412:9411
     networks:
       - mission-critical-network
+
+  otel:
+    container_name: "otel"
+    image: otel/opentelemetry-collector-contrib
+    command: [
+      "/otelcol-contrib",
+      "--config=/conf/otel-collector-config.yaml"
+    ]
+    privileged: true
+    ports:
+      - 4317:4317
+      - 4318:4318
+      - 9413:9411
+    volumes:
+      - ./components/otel-collector-config.yaml:/conf/otel-collector-config.yaml
+    networks:
+      - mission-critical-network
