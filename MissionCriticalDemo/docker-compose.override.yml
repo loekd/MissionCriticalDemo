@@ -25,10 +25,13 @@ services:
 
   mongodb:
     container_name: stateserver
-    image: mongo:5.0.6
+    image: bitnami/mongodb:6.0.2
     restart: always
     ports:
       - 27017:27017
+    environment:
+      - MONGODB_REPLICA_SET_MODE=primary
+      - ALLOW_EMPTY_PASSWORD=yes
     networks:
       - mission-critical-network
 
