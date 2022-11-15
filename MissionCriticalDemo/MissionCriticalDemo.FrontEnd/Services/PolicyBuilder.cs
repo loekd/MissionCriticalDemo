@@ -5,7 +5,8 @@ namespace MissionCriticalDemo.FrontEnd.Services
 {
     public static class PolicyBuilder
     {
-        public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<TService>(IServiceProvider serviceProvider, int retryCount = 1)
+        public static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy<TService>(IServiceProvider serviceProvider, 
+            int retryCount = 1)
             where TService : class, IService
         {
             var logger = serviceProvider.GetRequiredService<ILogger<TService>>();
@@ -19,7 +20,8 @@ namespace MissionCriticalDemo.FrontEnd.Services
                     });
         }
 
-        public static IAsyncPolicy<HttpResponseMessage> GetFallbackPolicy<TService>(IServiceProvider serviceProvider, Func<Context, CancellationToken, Task<HttpResponseMessage>> valueFactory)
+        public static IAsyncPolicy<HttpResponseMessage> GetFallbackPolicy<TService>(IServiceProvider serviceProvider, 
+            Func<Context, CancellationToken, Task<HttpResponseMessage>> valueFactory)
             where TService : class, IService
         {
             var logger = serviceProvider.GetRequiredService<ILogger<TService>>();
