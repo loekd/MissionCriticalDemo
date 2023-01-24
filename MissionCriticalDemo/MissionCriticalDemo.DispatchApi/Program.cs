@@ -17,8 +17,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews()
-    .AddDapr()
-    .AddFluentValidation();
+    .AddDapr();
+builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddRazorPages();
 builder.Services.AddResponseCompression(opts =>
 {
