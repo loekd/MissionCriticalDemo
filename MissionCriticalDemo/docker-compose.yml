@@ -15,7 +15,7 @@ services:
       - "/etc/localtime:/etc/localtime:ro"
 
   MissionCriticalDemo.DispatchApi-dapr:
-    image: "daprio/daprd:1.6.0"
+    image: "daprio/daprd:1.9.5"
     command: [
       "./daprd",
      "-app-id", "dispatch_api",
@@ -40,7 +40,7 @@ services:
       - mission-critical-network
 
   MissionCriticalDemo.PlantApi-dapr:
-    image: "daprio/daprd:1.6.0"
+    image: "daprio/daprd:1.9.5"
     command: [
       "./daprd",
      "-app-id", "plant_api",
