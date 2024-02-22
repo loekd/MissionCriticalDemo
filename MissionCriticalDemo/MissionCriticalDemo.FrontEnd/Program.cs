@@ -1,4 +1,3 @@
-using BlazorApplicationInsights;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -35,20 +34,6 @@ builder.Services.AddMsalAuthentication(options =>
     builder.Configuration.Bind("AzureAdB2C", options.ProviderOptions.Authentication);
     options.ProviderOptions.DefaultAccessTokenScopes.Add("https://loekdb2c.onmicrosoft.com/b818d130-9845-4c80-b99c-f5b4b073a912/API.Access");
     options.ProviderOptions.LoginMode = "redirect";
-});
-
-builder.Services.AddBlazorApplicationInsights(async applicationInsights =>
-{
-    var telemetryItem = new TelemetryItem()
-    {
-        Tags = new Dictionary<string, object>()
-            {
-                { "ai.cloud.role", "FrontEnd" },
-                { "ai.cloud.roleInstance", "Dispatch" },
-            }
-    };
-
-    await applicationInsights.AddTelemetryInitializer(telemetryItem);
 });
 
 
