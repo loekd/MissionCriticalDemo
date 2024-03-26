@@ -3,7 +3,7 @@ using MissionCriticalDemo.Messages;
 
 namespace MissionCriticalDemo.DispatchApi.Services
 {
-    public class OutboxProcessor : IHostedService
+    public class OutboxProcessor : BackgroundService
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<OutboxProcessor> _logger;
@@ -24,40 +24,34 @@ namespace MissionCriticalDemo.DispatchApi.Services
             _logger = logger;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            _ = Task.Run(async () =>
+            await Task.Delay(10_000);
+
+            _logger.LogTrace("Running outbox processor");
+
+            using var scope = _serviceScopeFactory.CreateScope();
+            var daprClient = scope.ServiceProvider.GetRequiredService<DaprClient>();
+            var stopToken = _stopTokenSource.Token;
+
+            while (!stopToken.IsCancellationRequested)
             {
-                await Task.Delay(10_000);
-
-
-                _logger.LogTrace("Running outbox processor");
-
-                using var scope = _serviceScopeFactory.CreateScope();
-                var daprClient = scope.ServiceProvider.GetRequiredService<DaprClient>();
-                var stopToken = _stopTokenSource.Token;
-
-                while (!stopToken.IsCancellationRequested)
+                try
                 {
-                    try
-                    {
-                        await ProcessOutboxItems(daprClient, stopToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to process outbox items.");
-                        await Task.Delay(10_000, stopToken);
-                    }
-                    finally
-                    {
-                        await Task.Delay(1000, stopToken);
-                    }
+                    await ProcessOutboxItems(daprClient, stopToken);
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to process outbox items.");
+                    await Task.Delay(10_000, stopToken);
+                }
+                finally
+                {
+                    await Task.Delay(1000, stopToken);
+                }
+            }
 
-                _logger.LogTrace("Stopped outbox processor");
-
-            }, cancellationToken);
-            return Task.CompletedTask;
+            _logger.LogTrace("Stopped outbox processor");
         }
 
         private async Task ProcessOutboxItems(DaprClient daprClient, CancellationToken stopToken)
@@ -75,7 +69,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public override Task StopAsync(CancellationToken cancellationToken)
         {
             _stopTokenSource.Cancel(true);
             return Task.CompletedTask;
