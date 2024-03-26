@@ -1,7 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Dapr;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Identity.Web.Resource;
+using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.DispatchApi.Services;
+using MissionCriticalDemo.Messages;
 
 namespace MissionCriticalDemo.DispatchApi.Controllers
 {
@@ -12,13 +16,20 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
     public class GasInStoreController : ControllerBase
     {
         private readonly IGasStorage _gasStorage;
+        private readonly IMappers _mappers;
+        private readonly IHubContext<DispatchHub> _dispatchHub;
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
 
-        public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, ILogger<DispatchController> logger)
+        private const string _pubSubName = "dispatch_pubsub";
+        private const string _pubSubSubscriptionName = "flowres";
+
+        public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, IHubContext<DispatchHub> dispatchHubContext, ILogger<DispatchController> logger)
         {
             _gasStorage = gasStorage ?? throw new ArgumentNullException(nameof(gasStorage));
-            _logger = logger;
+            _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
+            _dispatchHub = dispatchHubContext ?? throw new ArgumentNullException(nameof(dispatchHubContext));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
             if (context.User?.Identity?.IsAuthenticated ?? false)
@@ -46,6 +57,28 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
                 return NotFound();
             }
             return Ok(currentTotal);
+        }
+
+        //Invoked by dapr
+        [AllowAnonymous]
+        [Topic(_pubSubName, _pubSubSubscriptionName)]
+        [HttpPost(_pubSubSubscriptionName)]
+        public async Task<IActionResult> ProcessIncomingPlantResponseMessage(Response response)
+        {
+            //process response
+            if (response.Success)
+            {
+                int delta = response.Direction == Shared.Enums.FlowDirection.Inject ? response.AmountInGWh : 0 - response.AmountInGWh;
+                var newTotal = await _gasStorage.AddGasInStore(response.CustomerId, delta);
+                var contract = _mappers.ToContract(response, newTotal);
+                
+                //notify front-end
+                await _dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson());
+
+                _logger.LogWarning("Received flow response id {ResponseId} for customer {CustomerId}!", response.ResponseId, response.CustomerId);
+            }
+
+            return Ok();
         }
     }
 }

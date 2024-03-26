@@ -20,22 +20,19 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         private readonly IGasStorage _gasStorage;
 
         private readonly DaprClient _daprClient;
-        private readonly IHubContext<DispatchHub> _dispatchHub;
         private readonly IMappers _mappers;
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
 
         private const string _stateStoreName = "dispatch_state";
-        private const string _pubSubName = "dispatch_pubsub";
-        private const string _pubSubSubscriptionName = "flowres";
 
-        public DispatchController(DaprClient daprClient, IGasStorage gasStorage, IHubContext<DispatchHub> dispatchHubContext, IHttpContextAccessor contextAccessor, IMappers mappers, ILogger<DispatchController> logger)
+
+        public DispatchController(DaprClient daprClient, IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, ILogger<DispatchController> logger)
         {
             _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
             _gasStorage = gasStorage ?? throw new ArgumentNullException(nameof(gasStorage));
-            _dispatchHub = dispatchHubContext ?? throw new ArgumentNullException(nameof(dispatchHubContext));
             _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
             if (context.User?.Identity?.IsAuthenticated ?? false)
@@ -74,27 +71,6 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
                 return BadRequest();
             }
             return Accepted();
-        }
-
-        //Invoked by dapr
-        [AllowAnonymous]
-        [Topic(_pubSubName, _pubSubSubscriptionName)]
-        [HttpPost(_pubSubSubscriptionName)]
-        public async Task<IActionResult> Post(Response response)
-        {
-            //process response
-            if (response.Success)
-            {
-                int delta = response.Direction == Shared.Enums.FlowDirection.Inject ? response.AmountInGWh : 0 - response.AmountInGWh;
-                var newTotal = await _gasStorage.AddGasInStore(response.CustomerId, delta);
-                var contract = _mappers.ToContract(response, newTotal);
-
-                await _dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson());
-
-                _logger.LogWarning("Received flow response id {ResponseId} for customer {CustomerId}!", response.ResponseId, response.CustomerId);
-            }
-
-            return Ok();
         }
     }
 }
