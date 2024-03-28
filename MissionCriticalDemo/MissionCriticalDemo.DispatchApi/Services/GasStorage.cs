@@ -1,27 +1,48 @@
-﻿using System.Collections.Concurrent;
+﻿using Dapr.Client;
+using MissionCriticalDemo.Shared;
+using System.Text.Json;
+using MissionCriticalDemo.Messages;
 
 namespace MissionCriticalDemo.DispatchApi.Services
 {
     public interface IGasStorage
     {
-        Task<int> AddGasInStore(Guid customerId, int amount);
+        Task SetGasInStore(Guid customerId, int amount);
         Task<int> GetGasInStore(Guid customerId);
+        Task ProcessRequest(Guid customerId, Shared.Contracts.Request request);
     }
 
-    public class GasStorage : IGasStorage
+    public class GasStorage(DaprClient daprClient, IMappers mappers) : IGasStorage
     {
-        private ConcurrentDictionary<Guid, int> _store = new();
+        private const string _gasInStoreStateStoreName = "gas_in_store_state";
+        private const string _outboxStateStoreName = "dispatch_state";
 
-        public Task<int> GetGasInStore(Guid customerId)
+
+        public async Task<int> GetGasInStore(Guid customerId)
         {
-            _store.TryGetValue(customerId, out int amount);
-            return Task.FromResult(amount);
+            //return 100;
+            int amount = await daprClient.GetStateAsync<int>(_gasInStoreStateStoreName, customerId.ToGuidString());
+            return amount;
         }
 
-        public Task<int> AddGasInStore(Guid customerId, int amount)
+        public async Task SetGasInStore(Guid customerId, int amount)
         {
-            _store.AddOrUpdate(customerId, c => amount, (c, a) => a + amount);
-            return GetGasInStore(customerId);
+            await daprClient.SaveStateAsync(_gasInStoreStateStoreName, customerId.ToGuidString(), amount);
+        }
+
+        public async Task ProcessRequest(Guid customerId, Shared.Contracts.Request request)
+        {
+            //we don't directly call the Plant API, but instead put a message in the outbox
+            //this way we can retry if the Plant API is down
+            var message = mappers.ToMessage(request, customerId);
+            var requests = new List<StateTransactionRequest>()
+            {
+                new(request.RequestId.ToGuidString(), JsonSerializer.SerializeToUtf8Bytes(message), StateOperationType.Upsert),
+                //TODO: add additional state changes in same transaction if needed
+            };
+
+            //save changes in transaction
+            await daprClient.ExecuteStateTransactionAsync(_outboxStateStoreName, requests, cancellationToken: CancellationToken.None);
         }
     }
 }

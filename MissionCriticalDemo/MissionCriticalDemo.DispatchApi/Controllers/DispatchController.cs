@@ -18,20 +18,14 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
     public class DispatchController : ControllerBase
     {
         private readonly IGasStorage _gasStorage;
-
-        private readonly DaprClient _daprClient;
-        private readonly IMappers _mappers;
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
 
-        private const string _stateStoreName = "dispatch_state";
 
 
-        public DispatchController(DaprClient daprClient, IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, ILogger<DispatchController> logger)
+        public DispatchController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, ILogger<DispatchController> logger)
         {
-            _daprClient = daprClient ?? throw new ArgumentNullException(nameof(daprClient));
             _gasStorage = gasStorage ?? throw new ArgumentNullException(nameof(gasStorage));
-            _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
@@ -42,7 +36,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(Shared.Contracts.Request request)
+        public async Task<IActionResult> ProcessRequest(Shared.Contracts.Request request)
         {
             _logger.LogTrace("Storing validated message with id {RequestId} from customer {CustomerId} in outbox", request.RequestId, _userId);
             try
@@ -54,20 +48,12 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
                 {
                     throw new InvalidOperationException($"Unable to withdraw more gas ({delta}) than customer {_userId} currently has in store ({currentTotal}).");
                 }
-
-                var message = _mappers.ToMessage(request, _userId.GetValueOrDefault());
-                var requests = new List<StateTransactionRequest>()
-                {
-                    new StateTransactionRequest(request.RequestId.ToGuidString(), JsonSerializer.SerializeToUtf8Bytes(message), StateOperationType.Upsert),
-                    //TODO: add additional state changes in same transaction
-                };
-                
-                //save data in transaction
-                await _daprClient.ExecuteStateTransactionAsync(_stateStoreName, requests, cancellationToken : CancellationToken.None);
+                //process 
+                await _gasStorage.ProcessRequest(_userId.GetValueOrDefault(), request);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to save state");
+                _logger.LogCritical(ex, "Failed to process request");
                 return BadRequest();
             }
             return Accepted();

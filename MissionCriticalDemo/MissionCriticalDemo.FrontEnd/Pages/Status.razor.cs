@@ -36,6 +36,8 @@ public partial class StatusModel : ComponentBase
     [Inject]
     public IHubConnectionBuilder? HubConnectionBuilder { get; set; }
 
+    public bool ButtonsDisabled { get; set; } = false;
+
     /// <summary>
     /// Runtime constructor
     /// </summary>
@@ -57,6 +59,7 @@ public partial class StatusModel : ComponentBase
     {
         try
         {
+            ButtonsDisabled = true;
             GasInStore = await DispatchService!.GetCustomerGasInStore();
         }
         catch (AccessTokenNotAvailableException ex)
@@ -66,6 +69,10 @@ public partial class StatusModel : ComponentBase
         catch (Exception ex)
         {
             Logger!.LogError("Failed to submit request. Error: {ErrorMessage}", ex.Message);
+        }
+        finally 
+        {
+            ButtonsDisabled = false;
         }
     }
 
@@ -107,6 +114,7 @@ public partial class StatusModel : ComponentBase
         var request = new Request(Guid.NewGuid(), Direction, Amount, DateTimeOffset.UtcNow);
         try
         {
+            ButtonsDisabled = true;
             await DispatchService!.SubmitRequest(request);
         }
         catch (AccessTokenNotAvailableException ex)
@@ -118,6 +126,11 @@ public partial class StatusModel : ComponentBase
             Snackbar!.Add($"Request processing failed: {ex.Message}", Severity.Warning);
             Logger!.LogError("Failed to submit request. Error: {ErrorMessage}", ex.Message);
         }
+        finally
+        {
+            ButtonsDisabled = false;
+        }
+        
     }
 
     protected async Task FetchGasInStore()

@@ -35,6 +35,18 @@ services:
     networks:
       - mission-critical-network
 
+  mongodb_gis:
+    container_name: gis_stateserver
+    image: bitnami/mongodb:6.0.2
+    restart: always
+    ports:
+      - 27018:27017
+    environment:
+      - MONGODB_REPLICA_SET_MODE=primary
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - mission-critical-network
+
   mongoexpress:
     container_name: stateviewer
     image: mongo-express

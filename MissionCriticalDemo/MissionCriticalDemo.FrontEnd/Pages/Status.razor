@@ -22,8 +22,8 @@
 
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="SubmitRequest">Submit request</MudButton>
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="SubmitRequest" Disabled="@ButtonsDisabled">Submit request</MudButton>
         &nbsp;
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchGasInStore">Fetch status</MudButton>
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchGasInStore" Disabled="@ButtonsDisabled">Fetch status</MudButton>
     </MudCardActions>
 </MudCard>
