@@ -1,0 +1,14 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: gas_in_store_state
+spec:
+  type: state.mongodb
+  version: v1
+  metadata:
+  - name: host
+    value: gis_stateserver:27017
+  - name: databaseName
+    value: "gis"
+  - name: collectionName
+    value: "gisCollection"

@@ -30,6 +30,7 @@ builder.Services.AddResponseCompression(opts =>
 builder.Services.AddTransient<IValidator<MissionCriticalDemo.Shared.Contracts.Request>, RequestValidator>();
 builder.Services.AddSingleton<IMappers, Mappers>();
 builder.Services.AddSingleton<IGasStorage, GasStorage>();
+builder.Services.AddDistributedMemoryCache();
 
 //configure auth callbacks
 builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
