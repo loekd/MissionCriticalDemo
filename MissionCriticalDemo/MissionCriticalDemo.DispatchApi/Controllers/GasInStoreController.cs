@@ -42,7 +42,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         public async Task<IActionResult> GetForCustomerId()
         {
             //fake buggy service
-            if (Random.Shared.Next(0, 11) <= 6) 
+            if (Random.Shared.Next(0, 11) <= 5) 
                 return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
             int currentTotal;
@@ -69,7 +69,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             if (response.Success)
             {
                 int delta = response.Direction == Shared.Enums.FlowDirection.Inject ? response.AmountInGWh : 0 - response.AmountInGWh;
-                int currentAmount = await _gasStorage.GetGasInStore(_userId.GetValueOrDefault());
+                int currentAmount = await _gasStorage.GetGasInStore(response.CustomerId);
                 int newAmount = currentAmount + delta;
                 await _gasStorage.SetGasInStore(response.CustomerId, newAmount);
                 var contract = _mappers.ToContract(response, newAmount);
