@@ -23,17 +23,28 @@ services:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
 
-  mongodb:
+  mongodb_outbox:
     container_name: stateserver
-    image: bitnami/mongodb:6.0.2
+    # image: bitnami/mongodb:6.0.2
+    image: mongo:7.0
     restart: always
     ports:
       - 27017:27017
     environment:
       - MONGODB_REPLICA_SET_MODE=primary
       - ALLOW_EMPTY_PASSWORD=yes
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - mission-critical-network
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'stateserver:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 30
 
   mongodb_gis:
     container_name: gis_stateserver
@@ -47,7 +58,19 @@ services:
     networks:
       - mission-critical-network
 
-  mongoexpress:
+  mongodb_plant:
+    container_name: plant_stateserver
+    image: bitnami/mongodb:6.0.2
+    restart: always
+    ports:
+      - 27019:27017
+    environment:
+      - MONGODB_REPLICA_SET_MODE=primary
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - mission-critical-network
+
+  mongoexpress_outbox:
     container_name: stateviewer
     image: mongo-express
     restart: always
@@ -59,6 +82,19 @@ services:
     networks:
       - mission-critical-network
 
+  mongoexpress_plant:
+    container_name: plant_stateviewer
+    image: mongo-express
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=plant_stateserver
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    ports:
+      - 8082:8081
+    networks:
+      - mission-critical-network
+
+
   redis:
     container_name: "redis_service"
     image: "redis"
@@ -68,11 +104,13 @@ services:
       - mission-critical-network
 
   redisinsights:
-    image: "redislabs/redisinsight"
+    image: redis/redisinsight:latest
     ports:
-      - "8001:8001"
+      - "5540:5540"
     networks:
       - mission-critical-network
+    volumes:
+      - redisinsights:/db
 
   zipkin:
     container_name: "zipkin"
@@ -82,19 +120,53 @@ services:
     networks:
       - mission-critical-network
 
-  otel:
-    container_name: "otel"
-    image: otel/opentelemetry-collector-contrib
+  # otel:
+  #   container_name: "otel"
+  #   image: otel/opentelemetry-collector-contrib
+  #   command: [
+  #     "/otelcol-contrib",
+  #     "--config=/conf/otel-collector-config.yaml"
+  #   ]
+  #   privileged: true
+  #   ports:
+  #     - 4317:4317
+  #     - 4318:4318
+  #     - 9413:9411
+  #   volumes:
+  #     - ./components/otel-collector-config.yaml:/conf/otel-collector-config.yaml
+  #   networks:
+  #     - mission-critical-network
+
+  MissionCriticalDemo.DispatchApi-dapr:
+    image: "daprio/daprd:1.13.1"
     command: [
-      "/otelcol-contrib",
-      "--config=/conf/otel-collector-config.yaml"
-    ]
-    privileged: true
-    ports:
-      - 4317:4317
-      - 4318:4318
-      - 9413:9411
+      "./daprd",
+     "-app-id", "dispatch_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/components/config.yaml"
+     ]
     volumes:
-      - ./components/otel-collector-config.yaml:/conf/otel-collector-config.yaml
-    networks:
-      - mission-critical-network
+      - "./components/:/components"
+    depends_on:
+      - MissionCriticalDemo.DispatchApi
+    network_mode: "service:MissionCriticalDemo.DispatchApi"
+
+  MissionCriticalDemo.PlantApi-dapr:
+    image: "daprio/daprd:1.13.1"
+    command: [
+      "./daprd",
+     "-app-id", "plant_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/components/config.yaml"
+     ]
+    volumes:
+      - "./components/:/components"
+    depends_on:
+      - MissionCriticalDemo.PlantApi
+    network_mode: "service:MissionCriticalDemo.PlantApi"
+
+
+volumes:
+  redisinsights:

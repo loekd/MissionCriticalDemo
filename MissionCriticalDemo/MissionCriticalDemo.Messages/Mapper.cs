@@ -10,10 +10,10 @@ namespace MissionCriticalDemo.Messages
     public interface IMappers
     {
         DataRequest ToContract(MessageRequest input);
-        DataResponse ToContract(MessageResponse input, int total);
+        DataResponse ToContract(MessageResponse input, int total, int currentFillLevel);
         MessageRequest ToMessage(DataRequest input, Guid customerId);
         MessageResponse ToMessage(DataResponse input, Guid customerId);
-        MessageResponse ToResponse(MessageRequest input, Guid flowResponseId, bool success, DateTimeOffset timestamp);
+        MessageResponse ToResponse(MessageRequest input, Guid flowResponseId, bool success, DateTimeOffset timestamp, int currentFillLevel, int maxFillLevel);
     }
 
     public class Mappers : IMappers
@@ -46,7 +46,7 @@ namespace MissionCriticalDemo.Messages
             return mapper.Map<MessageRequest>(input);
         }
 
-        public DataResponse ToContract(MessageResponse input, int total)
+        public DataResponse ToContract(MessageResponse input, int total, int currentFillLevel)
         {
             var configuration = new MapperConfiguration(cfg => cfg.CreateMap<MessageResponse, DataResponse>()
             .ForCtorParam(nameof(DataResponse.AmountInGWh), x => x.MapFrom(i => i.AmountInGWh))
@@ -55,7 +55,8 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(DataResponse.Timestamp), x => x.MapFrom(i => i.Timestamp))
             .ForCtorParam(nameof(DataResponse.ResponseId), x => x.MapFrom(i => i.ResponseId))
             .ForCtorParam(nameof(DataResponse.Success), x => x.MapFrom(i => i.Success))
-            .ForCtorParam(nameof(DataResponse.TotalAmountInGWh), x => x.MapFrom(i => total)));
+            .ForCtorParam(nameof(DataResponse.TotalAmountInGWh), x => x.MapFrom(i => total))
+            .ForCtorParam(nameof(DataResponse.CurrentFillLevel), x => x.MapFrom(i => currentFillLevel)));
 
             Mapper mapper = new(configuration);
             return mapper.Map<DataResponse>(input);
@@ -75,7 +76,7 @@ namespace MissionCriticalDemo.Messages
             return mapper.Map<MessageResponse>(input);
         }
 
-        public MessageResponse ToResponse(MessageRequest input, Guid flowResponseId, bool success, DateTimeOffset timestamp)
+        public MessageResponse ToResponse(MessageRequest input, Guid flowResponseId, bool success, DateTimeOffset timestamp, int currentFillLevel, int maxFillLevel)
         {
             var configuration = new MapperConfiguration(cfg => cfg.CreateMap<MessageRequest, MessageResponse>()
             .ForCtorParam(nameof(MessageResponse.AmountInGWh), x => x.MapFrom(i => i.AmountInGWh))
@@ -86,6 +87,8 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(MessageResponse.ResponseId), x => x.MapFrom(i => flowResponseId))
             .ForCtorParam(nameof(MessageResponse.Success), x => x.MapFrom(i => success))
             .ForCtorParam(nameof(MessageResponse.Timestamp), x => x.MapFrom(i => timestamp))
+            .ForCtorParam(nameof(MessageResponse.CurrentFillLevel), x => x.MapFrom(i => currentFillLevel))
+            .ForCtorParam(nameof(MessageResponse.MaxFillLevel), x => x.MapFrom(i => maxFillLevel))
             );
             Mapper mapper = new(configuration);
             MessageResponse flowResponse = mapper.Map<MessageResponse>(input);

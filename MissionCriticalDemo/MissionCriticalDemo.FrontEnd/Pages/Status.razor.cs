@@ -15,7 +15,15 @@ public partial class StatusModel : ComponentBase
 {
     private HubConnection? _hubConnection;
 
-    public int GasInStore { get; set; }
+    /// <summary>
+    /// Gas in store for current customer
+    /// </summary>
+    public int CustomerGasInStore { get; set; }
+    
+    /// <summary>
+    /// Gas in store for all customers
+    /// </summary>
+    public int OverallGasInStore { get; set; }
 
     public FlowDirection Direction { get; set; }
 
@@ -60,7 +68,8 @@ public partial class StatusModel : ComponentBase
         try
         {
             ButtonsDisabled = true;
-            GasInStore = await DispatchService!.GetCustomerGasInStore();
+            CustomerGasInStore = await DispatchService!.GetCustomerGasInStore();
+            OverallGasInStore = await DispatchService!.GetOverallGasInStore();
         }
         catch (AccessTokenNotAvailableException ex)
         {
@@ -95,7 +104,8 @@ public partial class StatusModel : ComponentBase
             if (response.Success)
             {
                 //update total gas in store
-                GasInStore = response.TotalAmountInGWh;
+                CustomerGasInStore = response.TotalAmountInGWh;
+                OverallGasInStore = response.CurrentFillLevel;
                 Logger!.LogWarning("Received a flow response message id {ResponseId}.", response!.ResponseId);
                 Snackbar!.Add($"Request was processed. Success: {response.Success}", Severity.Info);
             }
@@ -133,12 +143,12 @@ public partial class StatusModel : ComponentBase
         
     }
 
-    protected async Task FetchGasInStore()
+    protected async Task FetchCustomerGasInStore()
     {
-        GasInStore = 0;
+        CustomerGasInStore = 0;
         try
         {
-            GasInStore = await DispatchService!.GetCustomerGasInStore();
+            CustomerGasInStore = await DispatchService!.GetCustomerGasInStore();
         }
         catch (AccessTokenNotAvailableException ex)
         {
@@ -146,7 +156,25 @@ public partial class StatusModel : ComponentBase
         }
         catch (Exception ex)
         {
-            Snackbar!.Add($"Fetch status failed: {ex.Message}", Severity.Warning);
+            Snackbar!.Add($"Fetch customer gas in store failed: {ex.Message}", Severity.Warning);
+            Logger!.LogError("Failed to fetch customer status. Error: {ErrorMessage}", ex.Message);
+        }
+    }
+
+    protected async Task FetchOverallGasInStore()
+    {
+        OverallGasInStore = 0;
+        try
+        {
+            OverallGasInStore = await DispatchService!.GetOverallGasInStore();
+        }
+        catch (AccessTokenNotAvailableException ex)
+        {
+            ex.Redirect();
+        }
+        catch (Exception ex)
+        {
+            Snackbar!.Add($"Fetch overall gas in store failed: {ex.Message}", Severity.Warning);
             Logger!.LogError("Failed to fetch status. Error: {ErrorMessage}", ex.Message);
         }
     }

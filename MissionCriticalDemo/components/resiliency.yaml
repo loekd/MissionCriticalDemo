@@ -4,9 +4,9 @@ metadata:
   name: resiliency-policy
 # similar to subscription and configuration specs, scopes lists the Dapr App IDs that this
 # resiliency spec can be used by.
-scopes:
-  - server
-  - background-proc
+# scopes:
+#   - server
+#   - background-proc
 spec:
   # policies is where timeouts, retries and circuit breaker policies are defined. 
   # each is given a name so they can be referred to from the targets section in the resiliency spec.
@@ -26,7 +26,8 @@ spec:
       retryForever:
         policy: exponential
         maxInterval: 5s
-        maxRetries: -1 # retry indefinitely
+        # maxRetries: -1 # retry indefinitely
+        maxRetries: 5
 
       important:
         policy: constant

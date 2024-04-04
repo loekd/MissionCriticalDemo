@@ -1,0 +1,12 @@
+# apiVersion: dapr.io/v1alpha1
+# kind: Configuration
+# metadata:
+#   name: featureconfig
+# spec:
+#   features:
+#     - name: Transactional Outbox
+#       enabled: true
+#     - name: Component Hot Reloading
+#       enabled: true
+
+# just not worth it currently, there are too many things that are not working properly; cloud events, content type mismatch. Try again in a year.

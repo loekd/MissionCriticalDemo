@@ -5,7 +5,7 @@ namespace MissionCriticalDemo.Shared.Contracts;
 /// <summary>
 /// Request to inject or withdraw gas
 /// </summary>
-public record Request(Guid RequestId, 
+public record Request(Guid RequestId,
     FlowDirection Direction,
     int AmountInGWh,
     DateTimeOffset Timestamp);
@@ -14,10 +14,11 @@ public record Request(Guid RequestId,
 /// Result of requested injection or withdrawal
 /// </summary>
 public record Response(Guid ResponseId,
-    Guid RequestId, 
+    Guid RequestId,
     FlowDirection Direction,
     int AmountInGWh,
     bool Success,
     DateTimeOffset Timestamp,
-    int TotalAmountInGWh
+    int TotalAmountInGWh,
+    int CurrentFillLevel
     );

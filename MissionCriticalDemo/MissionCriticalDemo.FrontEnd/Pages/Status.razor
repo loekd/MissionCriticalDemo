@@ -6,7 +6,8 @@
 
 <PageTitle>Requests</PageTitle>
 
-<MudTextField @bind-Value="GasInStore" Label="Current Gas in Store (GWh)" ReadOnly="true"></MudTextField>
+<MudTextField @bind-Value="CustomerGasInStore" Label="Current Gas in Store (GWh) (for customer)" ReadOnly="true"></MudTextField>
+<MudTextField @bind-Value="OverallGasInStore" Label="Current Gas in Store (GWh) (total)" ReadOnly="true"></MudTextField>
 
 <MudCard>
     <MudCardContent>
@@ -15,7 +16,7 @@
 
         <MudRadioGroup @bind-SelectedOption="Direction">
             <MudRadio Option="FlowDirection.Inject" Color="Color.Primary" Size="Size.Small">Inject</MudRadio>
-            <MudRadio Option="FlowDirection.Witdraw" Color="Color.Primary" Size="Size.Small">Withdraw</MudRadio>
+            <MudRadio Option="FlowDirection.Withdraw" Color="Color.Primary" Size="Size.Small">Withdraw</MudRadio>
         </MudRadioGroup>
 
         <MudTextField @bind-Value="Amount" Label="Amount (GWh)" Variant="Variant.Text"></MudTextField>
@@ -24,6 +25,8 @@
     <MudCardActions>
         <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="SubmitRequest" Disabled="@ButtonsDisabled">Submit request</MudButton>
         &nbsp;
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchGasInStore" Disabled="@ButtonsDisabled">Fetch status</MudButton>
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchCustomerGasInStore" Disabled="@ButtonsDisabled">Fetch customer status</MudButton>
+        &nbsp;
+        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchOverallGasInStore" Disabled="@ButtonsDisabled">Fetch storage status</MudButton>
     </MudCardActions>
 </MudCard>

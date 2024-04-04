@@ -12,3 +12,11 @@ spec:
     value: "dispatch"
   - name: collectionName
     value: "dispatchCollection"
+  - name: params
+    value: "?replicaSet=rs0"
+  # - name: outboxPublishPubsub # pubsub component name to use for outbox publish
+  #   value: "dispatch_pubsub"
+  # - name: outboxPublishTopic # Required
+  #   value: "flowint_outbox"
+  # - name: outboxDiscardWhenMissingState #
+  #   value: false

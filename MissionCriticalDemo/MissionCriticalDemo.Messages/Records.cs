@@ -20,6 +20,8 @@ public record Response(Guid ResponseId,
     FlowDirection Direction,
     int AmountInGWh,
     bool Success,
-    DateTimeOffset Timestamp
+    DateTimeOffset Timestamp,
+    int CurrentFillLevel,
+    int MaxFillLevel
     );
 
