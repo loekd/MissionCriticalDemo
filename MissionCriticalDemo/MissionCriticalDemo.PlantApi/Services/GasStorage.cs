@@ -13,6 +13,8 @@ namespace MissionCriticalDemo.PlantApi.Services
 
         Task<int> GetGasInStore();
 
+        Task SetGasInStore(int amount);
+
         Task<int> GetMaximumFillLevel();
     }
 
@@ -57,6 +59,11 @@ namespace MissionCriticalDemo.PlantApi.Services
         public Task<int> GetMaximumFillLevel()
         {
             return Task.FromResult(100);
+        }
+
+        public Task SetGasInStore(int amount)
+        {
+            return daprClient.SaveStateAsync(_gasInStoreStateStoreName, _gasInStoreStateStoreKey, amount);
         }
     }
 }

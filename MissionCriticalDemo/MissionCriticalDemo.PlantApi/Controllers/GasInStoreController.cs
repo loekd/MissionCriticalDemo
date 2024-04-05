@@ -23,6 +23,23 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             return Ok(currentTotal);
         }
 
+
+        //Sets the amount of gas in store to the specified amount (seeding method, not for production use)
+        [HttpPost("{amount:int}")]
+        public async Task<IActionResult> SetGasInStore([FromRoute] int amount)
+        {
+            try
+            {
+                await gasStorage.SetGasInStore(amount);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to set gas in store");
+                throw;
+            }
+            return Ok(amount);
+        }
+
         [HttpGet("maxfilllevel")]
         public async Task<IActionResult> GetMaxFillLevel()
         {
