@@ -18,12 +18,12 @@ public partial class StatusModel : ComponentBase
     /// <summary>
     /// Gas in store for current customer
     /// </summary>
-    public int CustomerGasInStore { get; set; }
+    public int? CustomerGasInStore { get; set; }
     
     /// <summary>
     /// Gas in store for all customers
     /// </summary>
-    public int OverallGasInStore { get; set; }
+    public int? OverallGasInStore { get; set; }
 
     public FlowDirection Direction { get; set; }
 
@@ -145,7 +145,7 @@ public partial class StatusModel : ComponentBase
 
     protected async Task FetchCustomerGasInStore()
     {
-        CustomerGasInStore = 0;
+        CustomerGasInStore = null;
         try
         {
             CustomerGasInStore = await DispatchService!.GetCustomerGasInStore();
@@ -163,7 +163,7 @@ public partial class StatusModel : ComponentBase
 
     protected async Task FetchOverallGasInStore()
     {
-        OverallGasInStore = 0;
+        OverallGasInStore = null;
         try
         {
             OverallGasInStore = await DispatchService!.GetOverallGasInStore();
