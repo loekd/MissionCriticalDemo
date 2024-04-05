@@ -159,7 +159,8 @@ services:
      "-app-id", "plant_api",
      "-app-port", "80",
      "-components-path", "/components",
-     "-config", "/components/config.yaml"
+     "-config", "/components/config.yaml",
+     "--app-max-concurrency", "1"
      ]
     volumes:
       - "./components/:/components"
