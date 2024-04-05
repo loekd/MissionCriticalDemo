@@ -26,6 +26,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
+            //return;
             await Task.Delay(10_000);
 
             _logger.LogTrace("Running outbox processor");

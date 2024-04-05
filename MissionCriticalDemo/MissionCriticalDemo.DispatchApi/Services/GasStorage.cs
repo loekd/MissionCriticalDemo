@@ -5,6 +5,9 @@ using MissionCriticalDemo.Messages;
 
 namespace MissionCriticalDemo.DispatchApi.Services
 {
+    /// <summary>
+    /// Gas storage as seen from the customer perspective
+    /// </summary>
     public interface IGasStorage
     {
         Task SetGasInStore(Guid customerId, int amount);

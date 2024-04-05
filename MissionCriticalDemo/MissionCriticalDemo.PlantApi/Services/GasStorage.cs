@@ -1,27 +1,69 @@
-﻿using System.Collections.Concurrent;
+﻿using Dapr.Client;
 
 namespace MissionCriticalDemo.PlantApi.Services
 {
+    /// <summary>
+    /// Gas storage as seen from the plant perspective
+    /// </summary>
     public interface IGasStorage
     {
-        Task<int> AddGasInStore(Guid customerId, int amount);
-        Task<int> GetGasInStore(Guid customerId);
+        Task<int> InjectGas(int amount);
+
+        Task<int> WithdrawGas(int amount);
+
+        Task<int> GetGasInStore();
+
+        Task SetGasInStore(int amount);
+
+        Task<int> GetMaximumFillLevel();
     }
 
-    public class GasStorage : IGasStorage
+    public class GasStorage(DaprClient daprClient) : IGasStorage
     {
-        private ConcurrentDictionary<Guid, int> _store = new();
+        private const string _gasInStoreStateStoreName = "plant_state";
+        private const string _gasInStoreStateStoreKey = "overall_gas_in_store";
 
-        public Task<int> GetGasInStore(Guid customerId)
+        public async Task<int> GetGasInStore()
         {
-            _store.TryGetValue(customerId, out int amount);
-            return Task.FromResult(amount);
+            int amount = await daprClient.GetStateAsync<int>(_gasInStoreStateStoreName, _gasInStoreStateStoreKey);
+            return amount;
         }
 
-        public Task<int> AddGasInStore(Guid customerId, int amount)
+        public async Task<int> InjectGas(int amount)
         {
-            _store.AddOrUpdate(customerId, c => amount, (c, a) => a + amount);
-            return GetGasInStore(customerId);
+            int newAmount = await GetGasInStore() + amount;
+            int maxFillLevel = await GetMaximumFillLevel();
+            if (newAmount > maxFillLevel)
+            {
+                throw new InvalidOperationException("Maximum capacity would be exceeded.");
+            }
+
+            await Task.Delay(500); //fake some processing time
+            await daprClient.SaveStateAsync(_gasInStoreStateStoreName, _gasInStoreStateStoreKey, newAmount);
+            return newAmount;
+        }
+
+        public async Task<int> WithdrawGas(int amount)
+        {
+            int newAmount = await GetGasInStore() - amount;
+            if (newAmount < 0)
+            {
+                throw new InvalidOperationException("Not enough gas in store to complete this operation.");
+            }
+
+            await Task.Delay(500); //fake some processing time
+            await daprClient.SaveStateAsync(_gasInStoreStateStoreName, _gasInStoreStateStoreKey, newAmount);
+            return newAmount;
+        }
+
+        public Task<int> GetMaximumFillLevel()
+        {
+            return Task.FromResult(100);
+        }
+
+        public Task SetGasInStore(int amount)
+        {
+            return daprClient.SaveStateAsync(_gasInStoreStateStoreName, _gasInStoreStateStoreKey, amount);
         }
     }
 }

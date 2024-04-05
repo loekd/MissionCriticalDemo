@@ -1,0 +1,14 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: plant_state
+spec:
+  type: state.mongodb
+  version: v1
+  metadata:
+  - name: host
+    value: plant_stateserver:27017
+  - name: databaseName
+    value: "plant"
+  - name: collectionName
+    value: "plantCollection"

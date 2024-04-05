@@ -15,6 +15,8 @@ namespace MissionCriticalDemo.FrontEnd.Services
         Task SubmitRequest(Request request);
 
         Task<int> GetCustomerGasInStore();
+
+        Task<int> GetOverallGasInStore();
     }
 
     /// <summary>
@@ -25,7 +27,8 @@ namespace MissionCriticalDemo.FrontEnd.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<DispatchService> _logger;
         private const string _dispatchEndpoint = "api/dispatch";
-        private const string _gisEndpoint = "api/gasinstore";
+        private const string _customerGisEndpoint = "api/gasinstore";
+        private const string _overallGisEndpoint = "api/gasinstore/overall";
 
         public DispatchService(HttpClient httpClient, ILogger<DispatchService> logger)
         {
@@ -42,8 +45,14 @@ namespace MissionCriticalDemo.FrontEnd.Services
 
         public Task<int> GetCustomerGasInStore()
         {
-            _logger.LogDebug("Fetching gas in store");
-            return _httpClient.GetFromJsonAsync<int>(_gisEndpoint);
+            _logger.LogDebug("Fetching customer gas in store");
+            return _httpClient.GetFromJsonAsync<int>(_customerGisEndpoint);
+        }
+
+        public Task<int> GetOverallGasInStore()
+        {
+            _logger.LogDebug("Fetching overall gas in store");
+            return _httpClient.GetFromJsonAsync<int>(_overallGisEndpoint);
         }
 
         public static Task<HttpResponseMessage> FallbackGetCustomerGasInStore(Polly.Context context, CancellationToken cancellationToken)

@@ -16,9 +16,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", 
 	ProjectSection(SolutionItems) = preProject
 		components\config.yaml = components\config.yaml
 		components\otel-collector-config.yaml = components\otel-collector-config.yaml
+		components\outbox_config.yaml = components\outbox_config.yaml
 		components\pubsub.yaml = components\pubsub.yaml
 		components\resiliency.yaml = components\resiliency.yaml
 		components\statestore-gis.yaml = components\statestore-gis.yaml
+		components\statestore-plant.yaml = components\statestore-plant.yaml
 		components\statestore.yaml = components\statestore.yaml
 	EndProjectSection
 EndProject

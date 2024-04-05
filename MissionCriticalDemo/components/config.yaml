@@ -11,6 +11,6 @@ spec:
       endpointAddress: "http://zipkin:9411/api/v2/spans"
   metrics:
     enabled: true
-  features:
-    - name: Resiliency
-      enabled: true
+  # features:
+  #   - name: Resiliency
+  #     enabled: true
