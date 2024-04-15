@@ -137,36 +137,6 @@ services:
   #   networks:
   #     - mission-critical-network
 
-  MissionCriticalDemo.DispatchApi-dapr:
-    image: "daprio/daprd:1.13.1"
-    command: [
-      "./daprd",
-     "-app-id", "dispatch_api",
-     "-app-port", "80",
-     "-components-path", "/components",
-     "-config", "/components/config.yaml"
-     ]
-    volumes:
-      - "./components/:/components"
-    depends_on:
-      - MissionCriticalDemo.DispatchApi
-    network_mode: "service:MissionCriticalDemo.DispatchApi"
-
-  MissionCriticalDemo.PlantApi-dapr:
-    image: "daprio/daprd:1.13.1"
-    command: [
-      "./daprd",
-     "-app-id", "plant_api",
-     "-app-port", "80",
-     "-components-path", "/components",
-     "-config", "/components/config.yaml",
-     "--app-max-concurrency", "1"
-     ]
-    volumes:
-      - "./components/:/components"
-    depends_on:
-      - MissionCriticalDemo.PlantApi
-    network_mode: "service:MissionCriticalDemo.PlantApi"
 
 
 volumes:

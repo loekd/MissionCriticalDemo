@@ -14,9 +14,6 @@ Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-co
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", "{A85A66B6-72C5-4C8C-8085-1F7685F3725B}"
 	ProjectSection(SolutionItems) = preProject
-		components\config.yaml = components\config.yaml
-		components\otel-collector-config.yaml = components\otel-collector-config.yaml
-		components\outbox_config.yaml = components\outbox_config.yaml
 		components\pubsub.yaml = components\pubsub.yaml
 		components\resiliency.yaml = components\resiliency.yaml
 		components\statestore-gis.yaml = components\statestore-gis.yaml
@@ -25,6 +22,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MissionCriticalDemo.Messages", "MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj", "{4780E933-0664-44FB-8B2D-42FF2C2DE106}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{0A8F8A1C-372F-4F37-831B-27A6BE250BA1}"
+	ProjectSection(SolutionItems) = preProject
+		config\config.yaml = config\config.yaml
+		config\otel-collector-config.yaml = config\otel-collector-config.yaml
+		config\outbox_config.yaml = config\outbox_config.yaml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
