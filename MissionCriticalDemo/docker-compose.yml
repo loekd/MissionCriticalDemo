@@ -59,6 +59,17 @@ services:
       - MissionCriticalDemo.PlantApi
     network_mode: "service:MissionCriticalDemo.PlantApi"
 
+  MissionCriticalDemo.FrontEnd:
+    container_name: frontend
+    image: ${DOCKER_REGISTRY-}missioncriticaldemo.frontend
+    build:
+      context: .
+      dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
+    ports:
+      - "8089:80"
+      - "8090:443"
+    networks:
+      - mission-critical-network
 
   dapr-dashboard:
     container_name: dapr_dashboard

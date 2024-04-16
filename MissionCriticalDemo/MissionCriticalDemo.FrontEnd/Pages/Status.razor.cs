@@ -44,6 +44,9 @@ public partial class StatusModel : ComponentBase
     [Inject]
     public IHubConnectionBuilder? HubConnectionBuilder { get; set; }
 
+    [Inject]
+    public IConfiguration? Configuration { get; set; }
+
     public bool ButtonsDisabled { get; set; } = false;
 
     /// <summary>
@@ -90,8 +93,21 @@ public partial class StatusModel : ComponentBase
         if (_hubConnection != null)
             return;
 
+        Uri hubUrl;
+        string? dispatchApiUrl = Configuration?["DispatchApi::Endpoint"] ?? "https://localhost:7079";
+        if (string.IsNullOrWhiteSpace(dispatchApiUrl))
+        {
+            Console.WriteLine("Using NavigationManager for signalr");
+            hubUrl = NavigationManager!.ToAbsoluteUri("/dispatchhub");
+        }
+        else
+        {
+            Console.WriteLine($"Using {dispatchApiUrl} for signalr");
+            hubUrl = new Uri(new Uri(dispatchApiUrl), "dispatchhub");
+        }
+
         _hubConnection = HubConnectionBuilder!
-            .WithUrl(NavigationManager!.ToAbsoluteUri("/dispatchhub"))
+            .WithUrl(hubUrl)
             .Build();
 
         _hubConnection.On<string>("ReceiveMessage", (message) =>

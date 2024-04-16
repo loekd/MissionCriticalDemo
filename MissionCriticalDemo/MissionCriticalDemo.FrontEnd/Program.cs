@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -11,11 +12,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddHttpClient<DispatchService>("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress))
+builder.Services.AddScoped<CustomAuthorizationMessageHandler>();
+builder.Services.AddHttpClient<DispatchService>("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.Configuration["DispatchApi::Endpoint"] ?? "https://localhost:7079"))
     .AddPolicyHandler((sp, msg) => Polly.Policy.WrapAsync(
         PolicyBuilder.GetFallbackPolicy<DispatchService>(sp, DispatchService.FallbackGetCustomerGasInStore),
         PolicyBuilder.GetRetryPolicy<DispatchService>(sp)))
-    .AddHttpMessageHandler<BaseAddressAuthorizationMessageHandler>();
+    .AddHttpMessageHandler<CustomAuthorizationMessageHandler>();
 
 // Supply HttpClient instances that include access tokens when making requests to the server project
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("MissionCriticalDemo.ServerAPI"));
@@ -38,3 +40,16 @@ builder.Services.AddMsalAuthentication(options =>
 
 
 await builder.Build().RunAsync();
+
+
+public class CustomAuthorizationMessageHandler : AuthorizationMessageHandler
+{
+    public CustomAuthorizationMessageHandler(IAccessTokenProvider provider,
+        NavigationManager navigationManager, IConfiguration configuration)
+        : base(provider, navigationManager)
+    {
+        string apiUrl = configuration["DispatchApi::Endpoint"] ?? "https://localhost:7079";
+        ConfigureHandler(authorizedUrls: [apiUrl]);
+
+    }
+}
