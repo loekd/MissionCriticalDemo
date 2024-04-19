@@ -19,7 +19,7 @@ public partial class StatusModel : ComponentBase
     /// Gas in store for current customer
     /// </summary>
     public int? CustomerGasInStore { get; set; }
-    
+
     /// <summary>
     /// Gas in store for all customers
     /// </summary>
@@ -82,7 +82,7 @@ public partial class StatusModel : ComponentBase
         {
             Logger!.LogError("Failed to submit request. Error: {ErrorMessage}", ex.Message);
         }
-        finally 
+        finally
         {
             ButtonsDisabled = false;
         }
@@ -94,17 +94,9 @@ public partial class StatusModel : ComponentBase
             return;
 
         Uri hubUrl;
-        string? dispatchApiUrl = Configuration?["DispatchApi::Endpoint"] ?? "https://localhost:7079";
-        if (string.IsNullOrWhiteSpace(dispatchApiUrl))
-        {
-            Console.WriteLine("Using NavigationManager for signalr");
-            hubUrl = NavigationManager!.ToAbsoluteUri("/dispatchhub");
-        }
-        else
-        {
-            Console.WriteLine($"Using {dispatchApiUrl} for signalr");
-            hubUrl = new Uri(new Uri(dispatchApiUrl), "dispatchhub");
-        }
+        string dispatchApiUrl = Configuration!["DispatchApi:Endpoint"] ?? NavigationManager!.BaseUri;
+        Console.WriteLine($"Using '{dispatchApiUrl}/dispatchhub' for signalr");
+        hubUrl = new Uri(new Uri(dispatchApiUrl), "dispatchhub");
 
         _hubConnection = HubConnectionBuilder!
             .WithUrl(hubUrl)
@@ -156,7 +148,7 @@ public partial class StatusModel : ComponentBase
         {
             ButtonsDisabled = false;
         }
-        
+
     }
 
     protected async Task FetchCustomerGasInStore()

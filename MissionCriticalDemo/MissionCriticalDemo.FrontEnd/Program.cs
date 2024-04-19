@@ -13,7 +13,7 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped<CustomAuthorizationMessageHandler>();
-builder.Services.AddHttpClient<DispatchService>("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.Configuration["DispatchApi::Endpoint"] ?? "https://localhost:7079"))
+builder.Services.AddHttpClient<DispatchService>("MissionCriticalDemo.ServerAPI", client => client.BaseAddress = new Uri(builder.Configuration["DispatchApi:Endpoint"] ?? "https://localhost:7079"))
     .AddPolicyHandler((sp, msg) => Polly.Policy.WrapAsync(
         PolicyBuilder.GetFallbackPolicy<DispatchService>(sp, DispatchService.FallbackGetCustomerGasInStore),
         PolicyBuilder.GetRetryPolicy<DispatchService>(sp)))
@@ -48,7 +48,7 @@ public class CustomAuthorizationMessageHandler : AuthorizationMessageHandler
         NavigationManager navigationManager, IConfiguration configuration)
         : base(provider, navigationManager)
     {
-        string apiUrl = configuration["DispatchApi::Endpoint"] ?? "https://localhost:7079";
+        string apiUrl = configuration["DispatchApi:Endpoint"] ?? navigationManager.BaseUri;
         ConfigureHandler(authorizedUrls: [apiUrl]);
 
     }
