@@ -24,6 +24,70 @@ services:
     networks:
       - mission-critical-network
 
+  MissionCriticalDemo.DispatchApi-dapr:
+    container_name: dispatch_api_sidecar
+    image: "daprio/daprd:1.13.1"
+    command: [
+      "./daprd",
+     "-app-id", "dispatch_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/config/config.yaml"
+     ]
+    volumes:
+      - "./components/:/components"
+      - "./config/:/config"
+    depends_on:
+      - MissionCriticalDemo.DispatchApi
+    network_mode: "service:MissionCriticalDemo.DispatchApi"
+
+  MissionCriticalDemo.PlantApi-dapr:
+    container_name: plant_api_sidecar
+    image: "daprio/daprd:1.13.1"
+    command: [
+      "./daprd",
+     "-app-id", "plant_api",
+     "-app-port", "80",
+     "-components-path", "/components",
+     "-config", "/config/config.yaml",
+     "--app-max-concurrency", "1"
+     ]
+    volumes:
+      - "./components/:/components"
+      - "./config/:/config"
+    depends_on:
+      - MissionCriticalDemo.PlantApi
+    network_mode: "service:MissionCriticalDemo.PlantApi"
+
+  MissionCriticalDemo.FrontEnd:
+    container_name: frontend
+    image: ${DOCKER_REGISTRY-}missioncriticaldemo.frontend
+    build:
+      context: .
+      dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
+    ports:
+      - "8089:80"
+      - "8090:443"
+    networks:
+      - mission-critical-network
+
+  dapr-dashboard:
+    container_name: dapr_dashboard
+    image: "daprio/dashboard:latest"
+    command: [ "--docker-compose=true", 
+      "--components-path=/app/components", 
+      "--config-path=/app/config", 
+      "--docker-compose-path=/app/docker-compose.yml" ]
+    ports:
+      - "8088:8080"
+    volumes:
+      - "./components/:/app/components"
+      - "./config/:/app/config"
+      - ./docker-compose.yml:/app/docker-compose.yml
+      - ./docker-compose.override.yml:/app/docker-compose.override.yml
+    networks:
+      - mission-critical-network
+
 
 networks:
     mission-critical-network:

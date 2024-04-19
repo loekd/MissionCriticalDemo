@@ -41,10 +41,28 @@ builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSch
     {
         await existingOnTokenValidatedHandler(context);
     };
+
+    options.Events.OnTokenValidated = ctx =>
+    {
+        return Task.CompletedTask;
+    };
 });
 
 //outbox processing
 builder.Services.AddHostedService<OutboxProcessor>();
+
+//CORS
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        //allow the frontend with tokens
+        builder.AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .SetIsOriginAllowed((host) => true)
+                      .AllowCredentials();
+    });
+});
 
 var app = builder.Build();
 app.UseResponseCompression();
@@ -60,6 +78,9 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+//CORS
+app.UseCors();
 
 //important to leave this out, as Dapr will call the non-https endpoint
 //app.UseHttpsRedirection();

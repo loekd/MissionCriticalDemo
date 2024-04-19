@@ -1,0 +1,24 @@
+{
+  "profiles": {
+    "Docker Compose": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "serviceActions": {
+        "dapr-dashboard": "StartWithoutDebugging",
+        "MissionCriticalDemo.DispatchApi": "StartDebugging",
+        "MissionCriticalDemo.DispatchApi-dapr": "StartWithoutDebugging",
+        "MissionCriticalDemo.FrontEnd": "DoNotStart",
+        "MissionCriticalDemo.PlantApi": "StartDebugging",
+        "MissionCriticalDemo.PlantApi-dapr": "StartWithoutDebugging",
+        "mongodb_gis": "StartWithoutDebugging",
+        "mongodb_outbox": "StartWithoutDebugging",
+        "mongodb_plant": "StartWithoutDebugging",
+        "mongoexpress_outbox": "StartWithoutDebugging",
+        "mongoexpress_plant": "StartWithoutDebugging",
+        "redis": "StartWithoutDebugging",
+        "redisinsights": "StartWithoutDebugging",
+        "zipkin": "StartWithoutDebugging"
+      }
+    }
+  }
+}
