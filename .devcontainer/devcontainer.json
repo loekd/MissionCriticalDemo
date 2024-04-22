@@ -24,8 +24,8 @@
 		]
 	  }
 	},
-	"onCreateCommand": "bash ./.devcontainer/on-create.sh",
-	"postCreateCommand": "bash ./.devcontainer/post-create.sh",
+        "onCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/on-create.sh",
+        "postCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/post-create.sh",
 	"runArgs": [
 	  "--privileged",
 	  "--init"
