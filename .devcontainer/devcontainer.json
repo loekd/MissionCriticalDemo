@@ -1,7 +1,7 @@
 {
   "name": "devcontainer",
   "build": { "dockerfile": "Dockerfile" },
-  "workspaceFolder": "/workspaces/MissionCriticalDemo/MissionCriticalDemo",
+  "workspaceFolder": "/workspaces/MissionCriticalDemo",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
