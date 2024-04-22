@@ -34,11 +34,16 @@
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	  },
 	"portsAttributes": {
-	// 	"3000": {
-	// 	  "label": "demo-app",
-	// 	  "onAutoForward": "openBrowser",
-	// 	  "protocol": "http"
-	// 	},
+		"8088": {
+		  "label": "dapr-dashboard",
+		  "onAutoForward": "openBrowser",
+		  "protocol": "http"
+		},
+		"8089": {
+			"label": "frontend",
+			"onAutoForward": "openBrowser",
+			"protocol": "http"
+		  },
 		"8081": {
 		  "label": "k3s",
 		  "onAutoForward": "silent"
