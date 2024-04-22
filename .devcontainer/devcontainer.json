@@ -1,0 +1,30 @@
+{
+  "name": "devcontainer",
+  "image": "mcr.microsoft.com/dotnet/aspnet:8.0",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+    "ghcr.io/devcontainers/features/azure-cli:1": {}
+  },
+  "customizations": {
+	  // Configure properties specific to VS Code.
+	  "vscode": {
+		"settings": {},
+		"extensions": [
+			"ms-azuretools.vscode-dapr",
+			"ms-dotnettools.csharp",
+			"ms-azuretools.vscode-docker",
+			"ms-python.python",
+			"dunn.redis",
+			"GitHub.copilot",
+			"ms-azuretools.rad-vscode-bicep"
+		]
+	  }
+	},
+	"postCreateCommand": "bash ./.devcontainer/post-create.sh",
+	"runArgs": [
+	  "--privileged",
+	  "--init"
+	]
+}
