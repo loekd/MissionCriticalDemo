@@ -30,4 +30,14 @@ docker pull daprio/daprd:1.13.1
 docker pull jaegertracing/all-in-one:1.6
 #docker pull openzipkin/zipkin:2.23.4
 
-git config --global --add safe.directory /workspaces/MissionCriticalDemo
+
+# turn dispatch port to public (to allow CORS)
+gh codespace ports visibility 5133:public -c $CODESPACE_NAME
+
+
+echo "Editing the file '/workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json' and put https://$CODESPACE_NAME-5133.app.github.dev as value for DispatchApi:Endpoint"
+export URL="https://$CODESPACE_NAME-5133.app.github.dev"
+jq --arg newEndpoint "$URL" '.DispatchApi.Endpoint = $newEndpoint' /workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json > temp.json && mv temp.json /workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json
+echo "Make sure to add the proper redirect uri to Azure AD as well!"
+
+echo "Run `docker-compose -f docker-compose.yml -f docker-compose.override.yml up` to run the containers"

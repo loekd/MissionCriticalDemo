@@ -1,52 +1,69 @@
 {
-  "name": "devcontainer",
-  "build": { "dockerfile": "Dockerfile" },
-  "workspaceFolder": "/workspaces/MissionCriticalDemo",
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
-    "ghcr.io/devcontainers/features/azure-cli:1": {},
-	"ghcr.io/rio/features/k3d:1": {}
-  },
-  "customizations": {
-	  // Configure properties specific to VS Code.
-	  "vscode": {
-		"settings": {},
-		"extensions": [
-			"ms-azuretools.vscode-dapr",
-			"ms-dotnettools.csharp",
-			"ms-azuretools.vscode-docker",
-			"ms-python.python",
-			"dunn.redis",
-			"GitHub.copilot",
-			"ms-azuretools.rad-vscode-bicep"
-		]
-	  }
+	"name": "devcontainer",
+	"build": {
+		"dockerfile": "Dockerfile"
 	},
-        "onCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/on-create.sh",
-        "postCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/post-create.sh",
+	"workspaceFolder": "/workspaces/MissionCriticalDemo",
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {},
+		"ghcr.io/devcontainers/features/azure-cli:1": {},
+		"ghcr.io/rio/features/k3d:1": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"ms-azuretools.vscode-dapr",
+				"ms-dotnettools.csharp",
+				"ms-azuretools.vscode-docker",
+				"ms-python.python",
+				"dunn.redis",
+				"GitHub.copilot",
+				"ms-azuretools.rad-vscode-bicep"
+			]
+		}
+	},
+	"onCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/on-create.sh",
+	"postCreateCommand": "bash /workspaces/MissionCriticalDemo/.devcontainer/post-create.sh",
 	"runArgs": [
-	  "--privileged",
-	  "--init"
+		"--privileged",
+		"--init"
 	],
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
-	  },
+	},
 	"portsAttributes": {
 		"8088": {
-		  "label": "dapr-dashboard",
-		  "onAutoForward": "openBrowser",
-		  "protocol": "http"
+			"label": "dapr-dashboard",
+			"onAutoForward": "silent",
+			"protocol": "http"
 		},
 		"8089": {
 			"label": "frontend",
-			"onAutoForward": "openBrowser",
+			"onAutoForward": "notify",
 			"protocol": "http"
-		  },
+		},
+		"5133": {
+			"label": "dispatch-api",
+			"onAutoForward": "silent",
+			"protocol": "http"
+		},
+		"5071": {
+			"label": "plant-api",
+			"onAutoForward": "silent",
+			"protocol": "http"
+		},
 		"8081": {
-		  "label": "k3s",
-		  "onAutoForward": "silent"
+			"label": "k3s",
+			"onAutoForward": "silent"
+		},
+		"16686":{
+			"label": "zipkin-viewer",
+			"onAutoForward": "silent"
 		}
-	  }
+	}
 }
