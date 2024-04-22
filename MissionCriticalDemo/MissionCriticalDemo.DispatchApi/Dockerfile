@@ -7,12 +7,12 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["MissionCriticalDemo.DispatchApi/MissionCriticalDemo.MissionCriticalDemo.DispatchApi.csproj", "MissionCriticalDemo.DispatchApi/"]
-COPY ["Shared/MissionCriticalDemo.Shared.csproj", "MissionCriticalDemo.Shared/"]
-COPY ["Client/MissionCriticalDemo.FrontEnd.csproj", "MissionCriticalDemo.FrontEnd/"]
-RUN dotnet restore "MissionCriticalDemo.DispatchApi/MissionCriticalDemo.DispatchApi.csproj"
+COPY ["MissionCriticalDemo.DispatchApi/MissionCriticalDemo.DispatchApi.csproj", "MissionCriticalDemo.DispatchApi/"]
+COPY ["MissionCriticalDemo.Shared/MissionCriticalDemo.Shared.csproj", "MissionCriticalDemo.Shared/"]
+#COPY ["Client/MissionCriticalDemo.FrontEnd.csproj", "MissionCriticalDemo.FrontEnd/"]
 COPY . .
-WORKDIR "/src/Server"
+WORKDIR "/src/MissionCriticalDemo.DispatchApi"
+RUN dotnet restore "MissionCriticalDemo.DispatchApi.csproj"
 RUN dotnet build "MissionCriticalDemo.DispatchApi.csproj" -c Release -o /app/build
 
 FROM build AS publish
