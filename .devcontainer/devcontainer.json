@@ -1,6 +1,7 @@
 {
   "name": "devcontainer",
-  "image": "mcr.microsoft.com/dotnet/aspnet:8.0",
+  "build": { "dockerfile": "Dockerfile" },
+  "workspaceFolder": "/workspaces/MissionCriticalDemo/MissionCriticalDemo",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
