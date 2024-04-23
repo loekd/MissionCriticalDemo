@@ -36,10 +36,18 @@
 	"remoteEnv": {
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
+	"forwardPorts": [
+		5133,
+		8088,
+		8089,
+		5071,
+		16686,
+		8081
+	],
 	"portsAttributes": {
 		"8088": {
 			"label": "dapr-dashboard",
-			"onAutoForward": "silent",
+			"onAutoForward": "notify",
 			"protocol": "http"
 		},
 		"8089": {
@@ -49,20 +57,41 @@
 		},
 		"5133": {
 			"label": "dispatch-api",
-			"onAutoForward": "silent",
+			"onAutoForward": "notify",
 			"protocol": "http"
 		},
 		"5071": {
 			"label": "plant-api",
-			"onAutoForward": "silent",
+			"onAutoForward": "notify",
 			"protocol": "http"
 		},
 		"8081": {
 			"label": "k3s",
+			"onAutoForward": "notify"
+		},
+		"16686": {
+			"label": "zipkin-viewer",
+			"onAutoForward": "notify"
+		},
+		"27017": {
 			"onAutoForward": "silent"
 		},
-		"16686":{
-			"label": "zipkin-viewer",
+		"27018": {
+			"onAutoForward": "silent"
+		},
+		"27019": {
+			"onAutoForward": "silent"
+		},
+		"36689": {
+			"onAutoForward": "silent"
+		},
+		"42441": {
+			"onAutoForward": "silent"
+		},
+		"42617": {
+			"onAutoForward": "silent"
+		},
+		"44223": {
 			"onAutoForward": "silent"
 		}
 	}

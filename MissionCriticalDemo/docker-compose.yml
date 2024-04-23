@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   MissionCriticalDemo.DispatchApi:
     image: ${DOCKER_REGISTRY-}missioncriticaldemo.dispatchapi
@@ -48,7 +46,7 @@ services:
       "./daprd",
      "-app-id", "plant_api",
      "-app-port", "80",
-     "-components-path", "/components",
+     "-resources-path", "/components",
      "-config", "/config/config.yaml",
      "--app-max-concurrency", "1"
      ]
@@ -75,7 +73,7 @@ services:
     container_name: dapr_dashboard
     image: "daprio/dashboard:latest"
     command: [ "--docker-compose=true", 
-      "--components-path=/app/components", 
+      "--resources-path=/app/components", 
       "--config-path=/app/config", 
       "--docker-compose-path=/app/docker-compose.yml" ]
     ports:
