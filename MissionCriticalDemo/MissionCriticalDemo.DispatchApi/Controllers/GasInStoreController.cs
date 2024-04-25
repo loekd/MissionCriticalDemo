@@ -24,7 +24,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
 
-        private const string _pubSubName = "dispatch_pubsub";
+        private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubSubscriptionName = "flowres";
 
         public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, IHubContext<DispatchHub> dispatchHubContext, IDistributedCache cache, ILogger<DispatchController> logger)

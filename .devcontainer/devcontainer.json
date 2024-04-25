@@ -38,12 +38,12 @@
 		"LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
 	},
 	"forwardPorts": [
-		5133,
+		8080,
 		8088,
 		8089,
-		5071,
+		8081,
 		16686,
-		8081
+		8082
 	],
 	"portsAttributes": {
 		"8088": {
@@ -51,17 +51,17 @@
 			"onAutoForward": "notify",
 			"protocol": "http"
 		},
-		"8089": {
+		"80": {
 			"label": "frontend",
 			"onAutoForward": "notify",
 			"protocol": "http"
 		},
-		"5133": {
+		"8080": {
 			"label": "dispatch-api",
 			"onAutoForward": "notify",
 			"protocol": "http"
 		},
-		"5071": {
+		"8082": {
 			"label": "plant-api",
 			"onAutoForward": "notify",
 			"protocol": "http"
