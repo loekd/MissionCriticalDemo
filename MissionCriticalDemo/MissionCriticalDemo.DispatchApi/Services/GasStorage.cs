@@ -17,8 +17,8 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
     public class GasStorage(DaprClient daprClient, IMappers mappers) : IGasStorage
     {
-        private const string _gasInStoreStateStoreName = "gas_in_store_state";
-        private const string _outboxStateStoreName = "dispatch_state";
+        private const string _gasInStoreStateStoreName = "gasinstorestate";
+        private const string _outboxStateStoreName = "dispatchstate";
 
 
         public async Task<int> GetGasInStore(Guid customerId)

@@ -20,7 +20,7 @@ namespace MissionCriticalDemo.PlantApi.Services
 
     public class GasStorage(DaprClient daprClient) : IGasStorage
     {
-        private const string _gasInStoreStateStoreName = "plant_state";
+        private const string _gasInStoreStateStoreName = "plantstate";
         private const string _gasInStoreStateStoreKey = "overall_gas_in_store";
 
         public async Task<int> GetGasInStore()

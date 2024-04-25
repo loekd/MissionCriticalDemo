@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: dispatch_state
+  name: dispatchstate
 spec:
   type: state.mongodb
   version: v1

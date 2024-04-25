@@ -7,8 +7,8 @@ namespace MissionCriticalDemo.DispatchApi.Services
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<OutboxProcessor> _logger;
-        private const string _stateStoreName = "dispatch_state";
-        private const string _pubSubName = "dispatch_pubsub";
+        private const string _stateStoreName = "dispatchstate";
+        private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubTopicName = "flowint";
         private const string query = "{\"sort\": [{\"key\": \"value.Timestamp\",\"order\": \"DESC\"}]}";
         private readonly CancellationTokenSource _stopTokenSource = new CancellationTokenSource();

@@ -15,9 +15,7 @@ dapr uninstall # clean if needed
 dapr init -k
 
 
-## Build the containers
-cd /workspaces/MissionCriticalDemo/MissionCriticalDemo
-docker-compose -f docker-compose.yml -f docker-compose.override.yml build
+
 
 docker pull mongo:7.0
 docker pull bitnami/mongodb:6.0.2
@@ -43,8 +41,14 @@ jq --arg newEndpoint "$URL" '.DispatchApi.Endpoint = $newEndpoint' /workspaces/M
 export URL="https://$CODESPACE_NAME-8089.app.github.dev/authentication/login-callback"
 echo "Make sure to add this redirect uri \"$URL\" to Azure AD as well!"
 
+
+## echo hint about running the containers
+echo "Run \" sh ../../.devcontainer/build-and-publish-containers.sh\" to build and publish the container images locally"
 ## hint to run the containers
 echo "Run \"docker-compose -f docker-compose.yml -f docker-compose.override.yml up\" to run the containers"
+
+## hint to run the containers using radius
+echo "Run \"rad run\" to run the containers using radius, from the folder '/workspaces/MissionCriticalDemo/MissionCriticalDemo/radius'"
 
 ## mark repo as safe
 git config --global --add safe.directory /workspaces/MissionCriticalDemo

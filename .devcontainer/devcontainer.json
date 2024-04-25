@@ -23,7 +23,8 @@
 				"ms-python.python",
 				"dunn.redis",
 				"GitHub.copilot",
-				"ms-azuretools.rad-vscode-bicep"
+				"ms-azuretools.rad-vscode-bicep",
+				"ms-kubernetes-tools.vscode-kubernetes-tools"
 			]
 		}
 	},

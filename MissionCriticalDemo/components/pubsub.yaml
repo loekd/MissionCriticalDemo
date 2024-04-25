@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: dispatch_pubsub
+  name: dispatchpubsub
 spec:
   type: pubsub.redis
   version: v1
@@ -14,7 +14,7 @@ spec:
 #apiVersion: dapr.io/v1alpha1
 #kind: Component
 #metadata:
-#  name: dispatch_pubsub
+#  name: dispatchpubsub
 #spec:
 #  type: pubsub.rabbitmq
 #  metadata:

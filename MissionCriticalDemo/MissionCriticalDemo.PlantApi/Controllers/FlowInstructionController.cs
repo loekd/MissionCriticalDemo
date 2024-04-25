@@ -12,7 +12,7 @@ namespace MissionCriticalDemo.PlantApi.Controllers
     public class FlowInstructionController(IGasStorage gasStorage, IMappers mappers, ILogger<FlowInstructionController> logger) : ControllerBase
     {
         private readonly IMappers _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
-        private const string _pubSubName = "dispatch_pubsub";
+        private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubSubscriptionName = "flowint";
         private const string _pubSubTopicName = "flowres";
 
