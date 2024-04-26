@@ -12,6 +12,11 @@ Most data stores can be built by using Dapr defaults, except one.
 - Run this command to prepare radius:
     - `/workspaces/MissionCriticalDemo/MissionCriticalDemo/radius# rad init`
 
+- Run the project
+    - `rad run app.bicep`
+
+- Make sure Port 8080 is made public. It sometimes reverts to private.
+
 ## Usage
 
 
@@ -24,3 +29,18 @@ Open the user interface.
 Check Gas In Store at Plant level
 `https://fuzzy-yodel-g4495xr5xw736r7-8082.app.github.dev/api/gasinstore/gasinstore`
 
+
+
+## Redis
+Create a Port Forward to Redis. (change the pod name to the actual value)
+`kubectl port-forward pods/daprpubsub-fd6yvbjatqj5a-577df9c456-cbfbb 6379:6379 -n default-radius`
+Use the VS Code extension to connect to it on `localhost`, without credentials.
+
+## MongoDb
+Create a Port Forward to MongoDb in `default` namespace
+`kubectl port-forward pods/mongo-mongodb-0 27017:27017 -n default`
+Connect using extension: `mongodb://localhost:27017/?directConnection=true&replicaSet=rs0`
+
+
+## Debugging
+Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default-radius` inside a new terminal, to run an interactive container inside K8s for debugging.

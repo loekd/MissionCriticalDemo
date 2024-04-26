@@ -6,10 +6,9 @@ param environment string
 @description('The Radius Application ID. Injected automatically by the rad CLI.')
 param application string
 
-var dispatchApiPort=8080
-var plantApiPort=8082
-var frontendPort=80
-
+var dispatchApiPort = 8080
+var plantApiPort = 8082
+var frontendPort = 80
 
 // Blazor WASM Frontend on Nginx
 resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
@@ -44,8 +43,8 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
         web: {
           containerPort: dispatchApiPort
           port: dispatchApiPort
-        }
-      }
+        } 
+      }      
     }
     connections: {
       dispatchstate: {
@@ -66,6 +65,7 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
         kind: 'daprSidecar'
         appId: 'dispatchapi'
         appPort: dispatchApiPort
+        config: daprConfig.metadata.name
       }
     ]
   }
@@ -75,6 +75,25 @@ import kubernetes as kubernetes {
   kubeConfig: ''
   namespace: 'default'
 }
+
+resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
+  metadata: {
+    name: 'daprconfig'
+    namespace: 'default-radius'
+  }
+  spec: {
+    tracing: {
+      samplingRate: '1'
+      zipkin: {
+        endpointAddress: 'http://zipkin:9411/api/v2/spans'
+      }
+    }
+    metric: {
+      enabled: true
+    }
+  }
+}
+
 
 resource service 'core/Service@v1' existing = {
   metadata: {
@@ -144,6 +163,13 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
         kind: 'daprSidecar'
         appId: 'plantapi'
         appPort: plantApiPort
+        config: daprConfig.metadata.name       
+      }
+      {
+        kind: 'kubernetesMetadata'
+        annotations: {
+          'dapr.io/app-max-concurrency': '1'
+        }
       }
     ]
   }
@@ -175,7 +201,7 @@ resource zipkin 'Applications.Core/containers@2023-10-01-preview' = {
     container: {
       image: 'jaegertracing/all-in-one:latest'
       env: {
-        COLLECTOR_ZIPKIN_HTTP_PORT: '9411'
+        COLLECTOR_ZIPKIN_HOST_PORT: ':9411'
         COLLECTOR_ZIPKIN_ALLOWED_ORIGINS: '*'
         COLLECTOR_ZIPKIN_ALLOWED_HEADERS: '*'
       }
