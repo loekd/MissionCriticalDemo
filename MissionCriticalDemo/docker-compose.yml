@@ -63,11 +63,6 @@ services:
     build:
       context: .
       dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
-    ports:
-      - "8089:80"
-      - "8090:443"
-    networks:
-      - mission-critical-network
 
   dapr-dashboard:
     container_name: dapr_dashboard

@@ -23,6 +23,13 @@ services:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
 
+  MissionCriticalDemo.FrontEnd:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "80:80"
+    
   mongodb_outbox:
     container_name: stateserver
     # image: bitnami/mongodb:6.0.2
@@ -90,7 +97,7 @@ services:
       - ME_CONFIG_MONGODB_SERVER=plant_stateserver
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     ports:
-      - 8082:8081
+      - 8084:8081
     networks:
       - mission-critical-network
 

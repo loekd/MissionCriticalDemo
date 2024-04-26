@@ -26,15 +26,23 @@ Open the user interface.
 - Inject some gas 
 - When everything is working, you will get a notification about processing, and the numbers should increase or decrease.
 
-Check Gas In Store at Plant level
-`https://fuzzy-yodel-g4495xr5xw736r7-8082.app.github.dev/api/gasinstore/gasinstore`
-
+Check Gas In Store at Plant level:
+- Browse:
+    `https://fuzzy-yodel-g4495xr5xw736r7-8082.app.github.dev/api/gasinstore/gasinstore`
+- Adjust:
+    - Port forward to plant api
+    - `curl -v -X POST http://localhost:8082/api/gasinstore/20`
 
 
 ## Redis
+
+### Kubernetes
 Create a Port Forward to Redis. (change the pod name to the actual value)
 `kubectl port-forward pods/daprpubsub-fd6yvbjatqj5a-577df9c456-cbfbb 6379:6379 -n default-radius`
 Use the VS Code extension to connect to it on `localhost`, without credentials.
+
+### Docker compose
+Use the VS Code extension to connect to it on `localhost:6378`, without credentials. 
 
 ## MongoDb
 Create a Port Forward to MongoDb in `default` namespace
