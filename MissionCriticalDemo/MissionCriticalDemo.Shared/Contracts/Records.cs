@@ -11,6 +11,18 @@ public record Request(Guid RequestId,
     DateTimeOffset Timestamp);
 
 /// <summary>
+/// Request to inject or withdraw gas for a customer
+/// </summary>
+public record CustomerRequest(Guid CustomerId, 
+    Guid RequestId,
+    FlowDirection Direction,
+    int AmountInGWh,
+    int CurrentFillLevel,
+    int MaxFillLevel,
+    bool Success,
+    DateTimeOffset Timestamp) : Request(RequestId, Direction, AmountInGWh, Timestamp);
+
+/// <summary>
 /// Result of requested injection or withdrawal
 /// </summary>
 public record Response(Guid ResponseId,

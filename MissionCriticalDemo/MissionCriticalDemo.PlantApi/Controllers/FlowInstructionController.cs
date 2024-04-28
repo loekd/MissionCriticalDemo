@@ -63,8 +63,14 @@ namespace MissionCriticalDemo.PlantApi.Controllers
             return Ok();
         }
 
-        private static async Task PublishFlowResponseMessage(DaprClient daprClient, Response response)
+        private async Task PublishFlowResponseMessage(DaprClient daprClient, Response response)
         {
+            //Fake buggy messaging service that sometimes retries sending the message multiple times
+            if (Random.Shared.Next(0, 11) <= 5)
+            {
+                await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, response);
+                logger.LogWarning("Published the same message multiple times! Id:{ResponseId}", response.ResponseId);
+            }
             await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, response);
         }
     }

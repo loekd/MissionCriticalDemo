@@ -30,9 +30,8 @@ services:
     ports:
       - "80:80"
     
-  mongodb_outbox:
-    container_name: stateserver
-    # image: bitnami/mongodb:6.0.2
+  mongodb_dispatch:
+    container_name: dispatch_stateserver
     image: mongo:7.0
     restart: always
     ports:
@@ -46,24 +45,12 @@ services:
       - mission-critical-network
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'stateserver:27017'}]}) }" | mongosh --port 27017 --quiet
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'dispatch_stateserver:27017'}]}) }" | mongosh --port 27017 --quiet
       interval: 5s
       timeout: 30s
       start_period: 0s
       #start_interval: 1s
       retries: 30
-
-  mongodb_gis:
-    container_name: gis_stateserver
-    image: bitnami/mongodb:6.0.2
-    restart: always
-    ports:
-      - 27018:27017
-    environment:
-      - MONGODB_REPLICA_SET_MODE=primary
-      - ALLOW_EMPTY_PASSWORD=yes
-    networks:
-      - mission-critical-network
 
   mongodb_plant:
     container_name: plant_stateserver
@@ -77,12 +64,12 @@ services:
     networks:
       - mission-critical-network
 
-  mongoexpress_outbox:
-    container_name: stateviewer
+  mongoexpress_dispatch:
+    container_name: dispatch_stateviewer
     image: mongo-express
     restart: always
     environment:
-      - ME_CONFIG_MONGODB_SERVER=stateserver
+      - ME_CONFIG_MONGODB_SERVER=dispatch_stateserver
       - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
     ports:
       - 8083:8081

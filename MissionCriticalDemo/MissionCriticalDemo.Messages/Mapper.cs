@@ -5,12 +5,17 @@ using MessageRequest = MissionCriticalDemo.Messages.Request;
 using DataResponse = MissionCriticalDemo.Shared.Contracts.Response;
 using MessageResponse = MissionCriticalDemo.Messages.Response;
 
+
+using DataCustomerRequest = MissionCriticalDemo.Shared.Contracts.CustomerRequest;
+
+
 namespace MissionCriticalDemo.Messages
 {
     public interface IMappers
     {
         DataRequest ToContract(MessageRequest input);
-        DataResponse ToContract(MessageResponse input, int total, int currentFillLevel);
+        DataResponse ToContract(DataCustomerRequest input, int customerTotal, bool success = true);
+        DataCustomerRequest ToCustomerContract(MessageResponse input);
         MessageRequest ToMessage(DataRequest input, Guid customerId);
         MessageResponse ToMessage(DataResponse input, Guid customerId);
         MessageResponse ToResponse(MessageRequest input, Guid flowResponseId, bool success, DateTimeOffset timestamp, int currentFillLevel, int maxFillLevel);
@@ -31,6 +36,23 @@ namespace MissionCriticalDemo.Messages
             return mapper.Map<DataRequest>(input);
         }
 
+        public DataCustomerRequest ToCustomerContract(MessageResponse input)
+        {
+            var configuration = new MapperConfiguration(cfg => cfg
+                .CreateMap<MessageResponse, DataCustomerRequest>()
+                .ForCtorParam(nameof(DataCustomerRequest.AmountInGWh), x => x.MapFrom(i => i.AmountInGWh))
+                .ForCtorParam(nameof(DataCustomerRequest.Direction), x => x.MapFrom(i => i.Direction))
+                .ForCtorParam(nameof(DataCustomerRequest.RequestId), x => x.MapFrom(i => i.ResponseId))
+                .ForCtorParam(nameof(DataCustomerRequest.Timestamp), x => x.MapFrom(i => i.Timestamp))
+                .ForCtorParam(nameof(DataCustomerRequest.CustomerId), x => x.MapFrom(i => i.CustomerId))
+                .ForCtorParam(nameof(DataCustomerRequest.CurrentFillLevel), x => x.MapFrom(i => i.CurrentFillLevel))
+                .ForCtorParam(nameof(DataCustomerRequest.MaxFillLevel), x => x.MapFrom(i => i.MaxFillLevel))
+                .ForCtorParam(nameof(DataCustomerRequest.Success), x => x.MapFrom(i => i.Success))
+                );
+            Mapper mapper = new(configuration);
+            return mapper.Map<DataCustomerRequest>(input);
+        }
+
         public MessageRequest ToMessage(DataRequest input, Guid customerId)
         {
             var configuration = new MapperConfiguration(cfg => cfg
@@ -46,17 +68,17 @@ namespace MissionCriticalDemo.Messages
             return mapper.Map<MessageRequest>(input);
         }
 
-        public DataResponse ToContract(MessageResponse input, int total, int currentFillLevel)
+        public DataResponse ToContract(DataCustomerRequest input, int customerTotal, bool success = true)
         {
-            var configuration = new MapperConfiguration(cfg => cfg.CreateMap<MessageResponse, DataResponse>()
+            var configuration = new MapperConfiguration(cfg => cfg.CreateMap<DataCustomerRequest, DataResponse>()
             .ForCtorParam(nameof(DataResponse.AmountInGWh), x => x.MapFrom(i => i.AmountInGWh))
             .ForCtorParam(nameof(DataResponse.Direction), x => x.MapFrom(i => i.Direction))
             .ForCtorParam(nameof(DataResponse.RequestId), x => x.MapFrom(i => i.RequestId))
             .ForCtorParam(nameof(DataResponse.Timestamp), x => x.MapFrom(i => i.Timestamp))
-            .ForCtorParam(nameof(DataResponse.ResponseId), x => x.MapFrom(i => i.ResponseId))
-            .ForCtorParam(nameof(DataResponse.Success), x => x.MapFrom(i => i.Success))
-            .ForCtorParam(nameof(DataResponse.TotalAmountInGWh), x => x.MapFrom(i => total))
-            .ForCtorParam(nameof(DataResponse.CurrentFillLevel), x => x.MapFrom(i => currentFillLevel)));
+            .ForCtorParam(nameof(DataResponse.ResponseId), x => x.MapFrom(i => i.RequestId))
+            .ForCtorParam(nameof(DataResponse.Success), x => x.MapFrom(i => success))
+            .ForCtorParam(nameof(DataResponse.TotalAmountInGWh), x => x.MapFrom(i => customerTotal))
+            .ForCtorParam(nameof(DataResponse.CurrentFillLevel), x => x.MapFrom(i => i.CurrentFillLevel)));
 
             Mapper mapper = new(configuration);
             return mapper.Map<DataResponse>(input);

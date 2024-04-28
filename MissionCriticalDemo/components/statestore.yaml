@@ -1,13 +1,13 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: dispatchstate
+  name: outboxstate
 spec:
   type: state.mongodb
   version: v1
   metadata:
   - name: host
-    value: stateserver:27017
+    value: dispatch_stateserver:27017
   - name: databaseName
     value: "dispatch"
   - name: collectionName
