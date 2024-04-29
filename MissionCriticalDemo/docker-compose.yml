@@ -63,19 +63,14 @@ services:
     build:
       context: .
       dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
-    ports:
-      - "8089:80"
-      - "8090:443"
-    networks:
-      - mission-critical-network
 
   dapr-dashboard:
     container_name: dapr_dashboard
     image: "daprio/dashboard:latest"
-    command: [ "--docker-compose=true", 
-      "--resources-path=/app/components", 
-      "--config-path=/app/config", 
-      "--docker-compose-path=/app/docker-compose.yml" ]
+    command: [ "--docker-compose", "true", 
+      "--components-path", "/app/components", 
+      "--config-path", "/app/config", 
+      "--docker-compose-path", "/app/docker-compose.yml" ]
     ports:
       - "8088:8080"
     volumes:

@@ -1,7 +1,7 @@
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
-  name: gasinstorestate
+  name: inboxstate
 spec:
   type: state.mongodb
   version: v1
@@ -9,6 +9,8 @@ spec:
   - name: host
     value: dispatch_stateserver:27017
   - name: databaseName
-    value: "gis"
+    value: "dispatch"
   - name: collectionName
-    value: "gisCollection"
+    value: "inboxCollection"
+  - name: params
+    value: "?replicaSet=rs0"

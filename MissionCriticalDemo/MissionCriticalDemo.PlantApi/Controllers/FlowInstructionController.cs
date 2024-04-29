@@ -12,7 +12,7 @@ namespace MissionCriticalDemo.PlantApi.Controllers
     public class FlowInstructionController(IGasStorage gasStorage, IMappers mappers, ILogger<FlowInstructionController> logger) : ControllerBase
     {
         private readonly IMappers _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
-        private const string _pubSubName = "dispatch_pubsub";
+        private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubSubscriptionName = "flowint";
         private const string _pubSubTopicName = "flowres";
 
@@ -63,8 +63,14 @@ namespace MissionCriticalDemo.PlantApi.Controllers
             return Ok();
         }
 
-        private static async Task PublishFlowResponseMessage(DaprClient daprClient, Response response)
+        private async Task PublishFlowResponseMessage(DaprClient daprClient, Response response)
         {
+            //Fake buggy messaging service that sometimes retries sending the message multiple times
+            if (Random.Shared.Next(0, 11) <= 5)
+            {
+                await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, response);
+                logger.LogWarning("Published the same message multiple times! Id:{ResponseId}", response.ResponseId);
+            }
             await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, response);
         }
     }

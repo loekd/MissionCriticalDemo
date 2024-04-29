@@ -24,7 +24,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
 
-        private const string _pubSubName = "dispatch_pubsub";
+        private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubSubscriptionName = "flowres";
 
         public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, IHubContext<DispatchHub> dispatchHubContext, IDistributedCache cache, ILogger<DispatchController> logger)
@@ -66,25 +66,14 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         [HttpGet("overall")]
         public async Task<IActionResult> GetGasInStore()
         {
-            int currentTotal;
-
-            if (!int.TryParse(await _cache.GetStringAsync(CacheKeyFillLevel), out currentTotal))
-            {
-                _logger.LogWarning("Failed to get gas in store from cache.");
-                //TODO: could call plant API to fetch latest value here
-            }
+            int currentTotal = await _gasStorage.GetCachedFillLevel() ?? 0;
             return Ok(currentTotal);
         }
 
         [HttpGet("maxfilllevel")]
         public async Task<IActionResult> GetMaxFillLevel()
         {
-            int maxFillLevel;
-            if (!int.TryParse(await _cache.GetStringAsync(CacheKeyFillLevel), out maxFillLevel))
-            {
-                _logger.LogWarning("Failed to get maximum fill level from cache.");
-                //TODO: could call plant API to fetch latest value here
-            }
+            int maxFillLevel = await _gasStorage.GetCachedMaxFillLevel() ?? 0;
             return Ok(maxFillLevel);
         }
 
@@ -92,27 +81,12 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         [AllowAnonymous]
         [Topic(_pubSubName, _pubSubSubscriptionName)]
         [HttpPost(_pubSubSubscriptionName)]
-        public async Task<IActionResult> ProcessIncomingPlantResponseMessage(Response response)
+        public async Task<IActionResult> ProcessIncomingPlantResponseMessage(Messages.Response response)
         {
-            //process response
-            if (response.Success)
-            {
-                int delta = response.Direction == Shared.Enums.FlowDirection.Inject ? response.AmountInGWh : 0 - response.AmountInGWh;
-                int currentAmount = await _gasStorage.GetGasInStore(response.CustomerId);
-                int newAmount = currentAmount + delta;
-                await _gasStorage.SetGasInStore(response.CustomerId, newAmount);
-                var contract = _mappers.ToContract(response, newAmount, response.CurrentFillLevel);
+            //put the incoming message in an inbox, using the dapr state store
+            await _gasStorage.StoreIncomingMessage(response);
 
-                //cache new storage levels
-                await _cache.SetStringAsync(CacheKeyFillLevel, response.CurrentFillLevel.ToString());
-                await _cache.SetStringAsync(CacheKeyMaximumFillLevel, response.MaxFillLevel.ToString());
-
-                //notify front-end
-                await _dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson());
-
-                _logger.LogWarning("Received flow response id {ResponseId} for customer {CustomerId}!", response.ResponseId, response.CustomerId);
-            }
-
+            _logger.LogWarning("Received flow response id {ResponseId} for customer {CustomerId}, amount: {Amount}, fill level: {FillLevel}.", response.ResponseId, response.CustomerId, response.AmountInGWh, response.CurrentFillLevel);
             return Ok();
         }
     }

@@ -51,6 +51,9 @@ builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSch
 //outbox processing
 builder.Services.AddHostedService<OutboxProcessor>();
 
+//inbox processing
+builder.Services.AddHostedService<InboxProcessor>();
+
 //CORS
 builder.Services.AddCors(options =>
 {

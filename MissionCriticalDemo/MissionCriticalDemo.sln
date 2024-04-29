@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", 
 		components\pubsub.yaml = components\pubsub.yaml
 		components\resiliency.yaml = components\resiliency.yaml
 		components\statestore-gis.yaml = components\statestore-gis.yaml
+		components\statestore-inbox.yaml = components\statestore-inbox.yaml
 		components\statestore-plant.yaml = components\statestore-plant.yaml
 		components\statestore.yaml = components\statestore.yaml
 	EndProjectSection
@@ -29,6 +30,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{0A8F8A
 		config\nginx.conf = config\nginx.conf
 		config\otel-collector-config.yaml = config\otel-collector-config.yaml
 		config\outbox_config.yaml = config\outbox_config.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "radius", "radius", "{DE20A5E4-0D05-4810-BDFD-5230BF8CE4D5}"
+	ProjectSection(SolutionItems) = preProject
+		radius\app.bicep = radius\app.bicep
+		radius\readme.md = radius\readme.md
 	EndProjectSection
 EndProject
 Global

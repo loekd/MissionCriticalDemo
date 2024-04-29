@@ -15,9 +15,7 @@ dapr uninstall # clean if needed
 dapr init -k
 
 
-## Build the containers
-cd /workspaces/MissionCriticalDemo/MissionCriticalDemo
-docker-compose -f docker-compose.yml -f docker-compose.override.yml build
+
 
 docker pull mongo:7.0
 docker pull bitnami/mongodb:6.0.2
@@ -32,19 +30,27 @@ docker pull jaegertracing/all-in-one:1.6
 
 
 ## turn dispatch port to public (to allow CORS)
-gh codespace ports visibility 5133:public -c $CODESPACE_NAME
+gh codespace ports visibility 8080:public -c $CODESPACE_NAME
 
 ## configure the dispatch api endpoint
-export URL="https://$CODESPACE_NAME-5133.app.github.dev"
+export URL="https://$CODESPACE_NAME-8080.app.github.dev"
 echo "Editing the file '/workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json' and put $URL as value for DispatchApi:Endpoint"
 jq --arg newEndpoint "$URL" '.DispatchApi.Endpoint = $newEndpoint' /workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json > temp.json && mv temp.json /workspaces/MissionCriticalDemo/MissionCriticalDemo/MissionCriticalDemo.FrontEnd/wwwroot/appsettings.json
 
-## notify user about the redirect url
-export URL="https://$CODESPACE_NAME-8089.app.github.dev/authentication/login-callback"
+## notify user about the frontend redirect url
+export URL="https://$CODESPACE_NAME-80.app.github.dev/authentication/login-callback"
 echo "Make sure to add this redirect uri \"$URL\" to Azure AD as well!"
 
+## run MongoDb replicaset
+helm install --set service.nameOverride=mongo --set replicaCount=1 --set architecture=replicaset --set auth.enabled=false mongo oci://registry-1.docker.io/bitnamicharts/mongodb
+
+## echo hint about running the containers
+echo "Run \" sh ../../.devcontainer/build-and-publish-containers.sh\" to build and publish the container images locally"
 ## hint to run the containers
 echo "Run \"docker-compose -f docker-compose.yml -f docker-compose.override.yml up\" to run the containers"
+
+## hint to run the containers using radius
+echo "Run \"rad init\" or \"rad run\" to run the containers using radius, from the folder '/workspaces/MissionCriticalDemo/MissionCriticalDemo/radius'"
 
 ## mark repo as safe
 git config --global --add safe.directory /workspaces/MissionCriticalDemo
