@@ -1,11 +1,20 @@
 # Getting started
 
 Most data stores can be built by using Dapr defaults, except one.
+When resuming a Codespace, you may need to install mongo and dapr again, and rebuild & publish the local container images.
+
+## Build and publish local container images
+- Run this script first:
+    - `sh /workspaces/MissionCriticalDemo/.devcontainer/build-and-publish-containers.sh`
 
 ## Prepare queryable external database
-- Dispatch API requires query support. This is not present in the default state store.
+- Dispatch API requires query support. This is not present in the default state store, so we need to bring in our own MongoDb.
 - This helm command was used to install a mongodb in replicaset mode:
     - `helm install --set service.nameOverride=mongo --set replicaCount=1 --set architecture=replicaset --set auth.enabled=false mongo oci://registry-1.docker.io/bitnamicharts/mongodb`
+
+## Prepare Dapr
+- This Dapr CLI command was used to prepare Dapr in the Kubernetes cluster:
+    - `dapr init -k`
 
 ## Prepare Radius
 

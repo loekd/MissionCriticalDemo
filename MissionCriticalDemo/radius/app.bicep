@@ -47,8 +47,11 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
       }      
     }
     connections: {
-      dispatchstate: {
-        source: dispatch_state.id
+      dispatchinboxstate: {
+        source: dispatch_inbox_state.id
+      }
+      dispatchoutboxstate: {
+        source: dispatch_outbox_state.id
       }
       gasinstorestate: {
         source: gas_in_store_state.id
@@ -102,9 +105,9 @@ resource service 'core/Service@v1' existing = {
   }
 }
 
-// outbox for dispatch API
-resource dispatch_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-  name: 'dispatchstate'
+// outbox for dispatch API (not managed by Radius)
+resource dispatch_outbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+  name: 'outboxstate'
   properties: {
     environment: environment
     application: application
@@ -114,18 +117,45 @@ resource dispatch_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
     metadata: {
       host: '${service.metadata.name}.${service.metadata.namespace}.svc.cluster.local:${service.spec.ports[0].port}'
       databaseName: 'dispatch'
-      collectionName: 'dispatchCollection'
+      collectionName: 'outboxCollection'
       params: '?replicaSet=rs0'
     }
   }
 }
 
-// gas in store state for dispatch API
+// inbox for dispatch API (not managed by Radius)
+resource dispatch_inbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+  name: 'inboxstate'
+  properties: {
+    environment: environment
+    application: application
+    resourceProvisioning: 'manual'
+    type: 'state.mongodb'
+    version: 'v1'
+    metadata: {
+      host: '${service.metadata.name}.${service.metadata.namespace}.svc.cluster.local:${service.spec.ports[0].port}'
+      databaseName: 'dispatch'
+      collectionName: 'inboxCollection'
+      params: '?replicaSet=rs0'
+    }
+  }
+}
+
+// gas in store state for dispatch API (not managed by Radius)
 resource gas_in_store_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'gasinstorestate'
   properties: {
     environment: environment
     application: application
+    resourceProvisioning: 'manual'
+    type: 'state.mongodb'
+    version: 'v1'
+    metadata: {
+      host: '${service.metadata.name}.${service.metadata.namespace}.svc.cluster.local:${service.spec.ports[0].port}'
+      databaseName: 'dispatch'
+      collectionName: 'gisCollection'
+      params: '?replicaSet=rs0'
+    }
   }
 }
 
@@ -175,7 +205,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
   }
 }
 
-// state store for plant API 
+// state store for plant API (managed by Radius)
 resource plant_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'plantstate'
   properties: {

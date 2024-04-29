@@ -50,7 +50,7 @@ echo "Run \" sh ../../.devcontainer/build-and-publish-containers.sh\" to build a
 echo "Run \"docker-compose -f docker-compose.yml -f docker-compose.override.yml up\" to run the containers"
 
 ## hint to run the containers using radius
-echo "Run \"rad run\" to run the containers using radius, from the folder '/workspaces/MissionCriticalDemo/MissionCriticalDemo/radius'"
+echo "Run \"rad init\" or \"rad run\" to run the containers using radius, from the folder '/workspaces/MissionCriticalDemo/MissionCriticalDemo/radius'"
 
 ## mark repo as safe
 git config --global --add safe.directory /workspaces/MissionCriticalDemo
