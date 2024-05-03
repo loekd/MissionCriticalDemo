@@ -5,6 +5,8 @@ metadata:
 spec:
   type: state.mongodb
   version: v1
+  scopes:
+    - plant_api
   metadata:
   - name: host
     value: plant_stateserver:27017

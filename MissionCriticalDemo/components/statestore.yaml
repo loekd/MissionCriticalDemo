@@ -5,13 +5,15 @@ metadata:
 spec:
   type: state.mongodb
   version: v1
+  scopes:
+    - dispatch_api
   metadata:
   - name: host
     value: dispatch_stateserver:27017
   - name: databaseName
     value: "dispatch"
   - name: collectionName
-    value: "dispatchCollection"
+    value: "outboxCollection"
   - name: params
     value: "?replicaSet=rs0"
   # - name: outboxPublishPubsub # pubsub component name to use for outbox publish

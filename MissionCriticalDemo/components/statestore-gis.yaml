@@ -5,10 +5,12 @@ metadata:
 spec:
   type: state.mongodb
   version: v1
+  scopes:
+    - dispatch_api
   metadata:
   - name: host
     value: dispatch_stateserver:27017
   - name: databaseName
-    value: "gis"
+    value: "dispatch"
   - name: collectionName
     value: "gisCollection"
