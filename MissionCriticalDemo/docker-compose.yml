@@ -48,7 +48,8 @@ services:
      "-app-port", "80",
      "-resources-path", "/components",
      "-config", "/config/config.yaml",
-     "--app-max-concurrency", "1"
+     "--app-max-concurrency", "1",
+     "--dapr-graceful-shutdown-seconds", "15"
      ]
     volumes:
       - "./components/:/components"
@@ -64,13 +65,21 @@ services:
       context: .
       dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
 
+  dapr-placement:
+    image: "daprio/dapr:1.13.1"
+    command: [ "./placement", "-port", "50000" ]
+    ports:
+      - "50000:50000"
+    networks:
+      - mission-critical-network
+
   dapr-dashboard:
     container_name: dapr_dashboard
     image: "daprio/dashboard:latest"
-    command: [ "--docker-compose", "true", 
-      "--components-path", "/app/components", 
-      "--config-path", "/app/config", 
-      "--docker-compose-path", "/app/docker-compose.yml" ]
+    command: [ "--docker-compose=true", 
+      "--components-path=/app/components", 
+      "--config-path=/app/config", 
+      "--docker-compose-path=/app/docker-compose.yml" ]
     ports:
       - "8088:8080"
     volumes:
