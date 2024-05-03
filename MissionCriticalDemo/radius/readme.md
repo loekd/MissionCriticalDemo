@@ -61,3 +61,34 @@ Connect using extension: `mongodb://localhost:27017/?directConnection=true&repli
 
 ## Debugging
 Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default-radius` inside a new terminal, to run an interactive container inside K8s for debugging.
+
+
+
+# Azure
+
+## Prepare
+
+- Create an SPN with Owner access on Azure Resource Group
+    - Create a secret
+    - Capture Client ID
+    - Capture Tenant ID
+- Create a radius environment: `rad init full`
+    - Configure it with the SPN details
+    - Name the environment `azure`
+- Register the recipes
+    - Service Bus (replaces Redis Pub/Sub with Cloud PaaS) 
+        - `rad bicep publish --file sb_pubsub_recipe.bicep --target br:acrradius.azurecr.io/recipes/sbpubsub:0.1.0`
+        - `rad recipe register pubsubRecipe --environment azure --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/sbpubsub:0.1.0`
+    - Local MongoDb (because Cosmos doesn't support query Dapr API)
+        - `rad bicep publish --file local_statestore_recipe.bicep --target br:acrradius.azurecr.io/recipes/localstatestore:0.1.0`
+        - `rad recipe register stateStoreRecipe --environment azure --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0`
+    - Local Jaeger (can be replaced with OTEL forwarder)
+        - `rad bicep publish --file jaeger_recipe.bicep --target br:acrradius.azurecr.io/recipes/jaeger:0.1.0`
+        - `rad recipe register jaegerRecipe --environment azure --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0`
+
+## Run
+
+- Deploy the Plant API
+    - `rad deploy plant.bicep -e azure`
+- Deploy and run the Dispatch API and Frontend
+    - `rad deploy dispatch.bicep -e azure`
