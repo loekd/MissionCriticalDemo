@@ -98,4 +98,4 @@ output result object = {
 }
 //deploying the recipe can be done by this command:
 //rad bicep publish --file sb_pubsub_recipe.bicep --target br:acrradius.azurecr.io/recipes/sbpubsub:0.1.0
-//rad recipe register pubsubRecipe --environment azure --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/sbpubsub:0.1.0
+//rad recipe register pubsubRecipe --environment azure --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/sbpubsub:0.1.0 --group azure

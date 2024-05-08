@@ -21,6 +21,10 @@ param password string = 'Password1234=='
 @description('Create a Mongo Replicaset? Default is false')
 param replicaset bool = false
 
+@description('The appId to scope to')
+param appId string
+
+import radius as radius
 import kubernetes as kubernetes {
   kubeConfig: ''
   namespace: context.runtime.kubernetes.namespace
@@ -195,6 +199,63 @@ resource svc 'core/Service@v1' = {
   }
 }
 
+// resource stateStore 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+//   name: uniqueName
+//   properties: {
+//     environment: context.environment
+//     application: context.application
+//     resourceProvisioning: 'manual'
+//     type: 'state.mongodb'
+//     version: 'v1'
+//     metadata: {
+//       host: '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local'
+//       databaseName: databaseName
+//       collectionName: context.resource.name
+//       username: null
+//       password: null
+//       operationTimeout: '30s'
+//       params: replicaset ? '?replicaSet=rs0': ''
+//     }
+//   }
+// }
+
+resource daprComponent 'dapr.io/Component@v1alpha1' = {
+  metadata: {
+    name: context.resource.name
+  }
+  scopes: [
+    appId
+  ]
+  spec: {
+    metadata: [
+      {
+        name: 'host'
+        value: '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local'
+      }, {
+        name: 'databaseName'
+        value: databaseName
+      }, {
+        name: 'collectionName'
+        value: context.resource.name
+      }, {
+        name: 'username'
+        value: null
+      }, {
+        name: 'password'
+        value: null
+      }, {
+        name: 'operationTimeout'
+        value: '30s'
+      }, {
+        name: 'params'
+        value: replicaset ? '?replicaSet=rs0' : ''
+      }
+    ]
+    type: 'state.mongodb'
+    version: 'v1'
+  }
+}
+
 output result object = {
   // This workaround is needed because the deployment engine omits Kubernetes resources from its output.
   //
@@ -219,7 +280,7 @@ output result object = {
   }
 }
 
-
 //deploying the recipe can be done by this command:
 //rad bicep publish --file local_statestore_recipe.bicep --target br:acrradius.azurecr.io/recipes/localstatestore:0.1.0
-//rad recipe register stateStoreRecipe --environment azure --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0
+//rad recipe register stateStoreRecipe --environment azure --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group azure
+//rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local

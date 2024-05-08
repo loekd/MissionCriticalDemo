@@ -8,6 +8,10 @@ param environment string
 @description('The Radius Application ID. Injected automatically by the rad CLI.')
 param application string
 
+var parameters = contains(environment, 'azure') ? {
+    location: 'northeurope'
+  } : {}
+
 // Zipkin telemetry collection endpoint using 'jaeger_recipe' 
 // No resource for OTEL collectors in Radius at this time, so we are using an extender
 resource jaegerExtender 'Applications.Core/extenders@2023-10-01-preview' = {
@@ -30,9 +34,7 @@ resource dispatch_pubsub 'Applications.Dapr/pubSubBrokers@2023-10-01-preview' = 
     resourceProvisioning: 'recipe'
     recipe: {
       name: 'pubsubRecipe'
-      parameters: {
-        location: 'northeurope'
-      }
+      parameters: parameters
     }
   }
 }

@@ -9,7 +9,11 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
+@description('The k8s namespace name (leave empty for local deployments).')
+param kubernetesNamespace string
+
 var plantApiPort = 8082
+
 
 module shared 'shared.bicep' = {
   name: 'shared'
@@ -19,15 +23,15 @@ module shared 'shared.bicep' = {
   }
 }
 
-import kubernetes as kubernetes {
+import kubernetes as localKubernetes {
   kubeConfig: ''
-  namespace: 'azure-radius' //TODO: find out how to detect this from context
+  namespace: kubernetesNamespace
 }
+
 
 resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   metadata: {
     name: 'plantdaprconfig'
-    namespace: 'azure-radius'
   }
   spec: {
     tracing: {
@@ -63,7 +67,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
     }
     connections: {
       plant_state: {
-        source: plant_state.id
+        source: plantStateStore.id
       }
       dispatchpubsub: {
         source: shared.outputs.pubsub.id
@@ -91,26 +95,26 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
 }
 
 // state store for plant API (managed by Radius)
-resource plant_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-  name: 'plantstate'
-  properties: {
-    environment: environment
-    application: application
-    resourceProvisioning: 'manual'
-    type: 'state.mongodb'
-    version: 'v1'     
-    metadata: {
-      host: '${plantStateStore.properties.host}:${plantStateStore.properties.port}'
-      databaseName: plantStateStore.properties.database
-      collectionName: plantStateStore.name
-      username: null
-      password: null      
-    }
-  }
-}
+// resource plant_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+//   name: 'plantstate'
+//   properties: {
+//     environment: environment
+//     application: application
+//     resourceProvisioning: 'manual'
+//     type: 'state.mongodb'
+//     version: 'v1'
+//     metadata: {
+//       host: '${plantStateStore.properties.host}:${plantStateStore.properties.port}'
+//       databaseName: plantStateStore.properties.database
+//       collectionName: plantStateStore.name
+//       username: null
+//       password: null
+//     }
+//   }
+// }
 
 resource plantStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
-  name: 'plantcollection'
+  name: 'plantstate'
   properties: {
     environment: environment
     application: application
@@ -118,9 +122,9 @@ resource plantStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-prev
     recipe: {
       name: 'stateStoreRecipe'
       parameters: {
-        databaseName: 'plant'        
-      }      
+        databaseName: 'plant'
+        appId: 'plantapi'
+      }
     }
   }
 }
-

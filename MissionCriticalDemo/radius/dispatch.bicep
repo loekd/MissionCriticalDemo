@@ -9,6 +9,9 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
+@description('The k8s namespace name (leave empty for local deployments).')
+param kubernetesNamespace string
+
 var dispatchApiPort = 8080
 
 module shared 'shared.bicep' = {
@@ -39,13 +42,13 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
     }
     connections: {
       dispatchinboxstate: {
-        source: dispatch_inbox_state.id
+        source: inboxStateStore.id
       }
       dispatchoutboxstate: {
-        source: dispatch_outbox_state.id
+        source: outboxStateStore.id
       }
       gasinstorestate: {
-        source: gas_in_store_state.id
+        source: gisStateStore.id
       }
       dispatchpubsub: {
         source: shared.outputs.pubsub.id
@@ -73,13 +76,12 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
 
 import kubernetes as kubernetes {
   kubeConfig: ''
-  namespace: 'azure-radius'
+  namespace: kubernetesNamespace
 }
 
 resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   metadata: {
-    name: 'dispatchdaprconfig'
-    namespace: 'azure-radius'
+    name: 'dispatchdaprconfig'    
   }
   spec: {
     tracing: {
@@ -95,29 +97,29 @@ resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
 }
 
 // outbox for dispatch API (not managed by Radius)
-resource dispatch_outbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-  name: 'outboxstate'
-  properties: {
-    environment: environment
-    application: application
-    resourceProvisioning: 'manual'
-    type: 'state.mongodb'
-    version: 'v1'
-    metadata: {
-      host: outboxStateStore.properties.host
-      databaseName: outboxStateStore.properties.database
-      collectionName: outboxStateStore.name
-      username: null
-      password: null
-      operationTimeout: '30s'
-      replicaset: true
-      params: '?replicaSet=rs0'
-    }
-  }
-}
+// resource dispatch_outbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+//   name: 'outboxstate'
+//   properties: {
+//     environment: environment
+//     application: application
+//     resourceProvisioning: 'manual'
+//     type: 'state.mongodb'
+//     version: 'v1'
+//     metadata: {
+//       host: outboxStateStore.properties.host
+//       databaseName: outboxStateStore.properties.database
+//       collectionName: outboxStateStore.name
+//       username: null
+//       password: null
+//       operationTimeout: '30s'
+//       replicaset: true
+//       params: '?replicaSet=rs0'
+//     }
+//   }
+// }
 
 resource outboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
-  name: 'outboxcollection'
+  name: 'outboxstate'
   properties: {
     environment: environment
     application: application
@@ -127,6 +129,7 @@ resource outboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-pre
       parameters: {
         databaseName: 'dispatch'
         replicaset: true
+        appId: 'dispatchapi'
       }
     }
   }
@@ -137,28 +140,28 @@ resource outboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-pre
 }
 
 // inbox for dispatch API (not managed by Radius)
-resource dispatch_inbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-  name: 'inboxstate'
-  properties: {
-    environment: environment
-    application: application
-    resourceProvisioning: 'manual'
-    type: 'state.mongodb'
-    version: 'v1'
-    metadata: {
-      host: inboxStateStore.properties.host
-      databaseName: inboxStateStore.properties.database
-      collectionName: inboxStateStore.name
-      username: null
-      password: null
-      operationTimeout: '30s'
-      params: '?replicaSet=rs0'
-    }
-  }
-}
+// resource dispatch_inbox_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+//   name: 'inboxstate'
+//   properties: {
+//     environment: environment
+//     application: application
+//     resourceProvisioning: 'manual'
+//     type: 'state.mongodb'
+//     version: 'v1'
+//     metadata: {
+//       host: inboxStateStore.properties.host
+//       databaseName: inboxStateStore.properties.database
+//       collectionName: inboxStateStore.name
+//       username: null
+//       password: null
+//       operationTimeout: '30s'
+//       params: '?replicaSet=rs0'
+//     }
+//   }
+// }
 
 resource inboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
-  name: 'inboxcollection'
+  name: 'inboxstate'
   properties: {
     environment: environment
     application: application
@@ -168,6 +171,7 @@ resource inboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-prev
       parameters: {
         databaseName: 'dispatch'
         replicaset: true
+        appId: 'dispatchapi'
       }
     }
   }
@@ -177,27 +181,27 @@ resource inboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-prev
 }
 
 // gas in store state for dispatch API (not managed by Radius)
-resource gas_in_store_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-  name: 'gasinstorestate'
-  properties: {
-    environment: environment
-    application: application
-    resourceProvisioning: 'manual'
-    type: 'state.mongodb'
-    version: 'v1'
-    metadata: {
-      host: gisStateStore.properties.host
-      databaseName: gisStateStore.properties.database
-      collectionName: gisStateStore.name
-      username: null
-      password: null
-      operationTimeout: '30s'
-    }
-  }
-}
+// resource gas_in_store_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
+//   name: 'gasinstorestate'
+//   properties: {
+//     environment: environment
+//     application: application
+//     resourceProvisioning: 'manual'
+//     type: 'state.mongodb'
+//     version: 'v1'
+//     metadata: {
+//       host: gisStateStore.properties.host
+//       databaseName: gisStateStore.properties.database
+//       collectionName: gisStateStore.name
+//       username: null
+//       password: null
+//       operationTimeout: '30s'
+//     }
+//   }
+// }
 
 resource gisStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
-  name: 'giscollection'
+  name: 'gasinstorestate'
   properties: {
     environment: environment
     application: application
@@ -207,6 +211,7 @@ resource gisStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-previe
       parameters: {
         databaseName: 'dispatch'
         replicaset: false
+        appId: 'dispatchapi'
       }
     }
   }
@@ -220,5 +225,6 @@ module frontend 'frontend.bicep' = {
     environment: environment
     application: application
     containerRegistry: containerRegistry
+    kubernetesNamespace: kubernetesNamespace
   }
 }

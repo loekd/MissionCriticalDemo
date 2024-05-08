@@ -141,4 +141,5 @@ output result object = {
 
 //deploying the recipe can be done by this command:
 //rad bicep publish --file jaeger_recipe.bicep --target br:acrradius.azurecr.io/recipes/jaeger:0.1.0
-//rad recipe register jaegerRecipe --environment azure --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0
+//rad recipe register jaegerRecipe --environment azure --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0 --group azure
+//rad recipe register jaegerRecipe --environment local --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0 --group local
