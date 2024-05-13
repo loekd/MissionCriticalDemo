@@ -60,9 +60,36 @@ Connect using extension: `mongodb://localhost:27017/?directConnection=true&repli
 
 
 ## Debugging
-Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default-radius` inside a new terminal, to run an interactive container inside K8s for debugging.
+Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside a new terminal, to run an interactive container inside K8s for debugging.
 
+# Local runs
 
+## Prepare
+- Create a cluster using k3d
+    - `winget install k3d`
+        - `k3d cluster create mycluster`
+    - Register it inside `config.yaml` in profile \.rad\ as `local`
+    - Select it: `rad workspace switch local`
+- Install Radius control plane
+    - `rad install kubernetes` or `rad install kubernetes --reinstall`
+- Install Dapr
+    - `dapr init -k`
+- Create Radius resource group
+    - `rad group create local`
+- Create local environment inside group
+    - `rad env create local -g local`
+- Deploy local recipes
+    - `rad recipe register pubsubRecipe --environment local --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/redispubsub:0.1.0 --group local`
+    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local`
+    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local`
+    - `rad recipe register jaegerRecipe --environment local --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0 --group local`
+## Run
+
+- Deploy plant API
+    - `kubectl config use-context k3d-mycluster`    
+    - `rad run .\plant.bicep -e local -g local --parameters kubernetesNamespace=local-radius`
+- Deploy dispatch api
+    - `rad run .\dispatch.bicep -e local -g local --parameters kubernetesNamespace=local-radius`
 
 # Azure
 
@@ -88,7 +115,11 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default-radius` 
 
 ## Run
 
-- Deploy the Plant API
-    - `rad deploy plant.bicep -e azure`
-- Deploy and run the Dispatch API and Frontend
-    - `rad deploy dispatch.bicep -e azure`
+- Deploy plant API
+    - `kubectl config use-context aksradius-admin`
+    - `rad workspace switch default`
+    - `rad run .\plant.bicep -e azure -g azure --parameters kubernetesNamespace=azure-radius`
+- Deploy dispatch api
+    - `rad run .\dispatch.bicep -e azure -g azure --parameters kubernetesNamespace=azure-radius`
+
+

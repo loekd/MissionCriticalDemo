@@ -92,5 +92,6 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
 }
 
 
-
+output frontendPort int = frontendPort
+output frontendName string = frontend.name
 
