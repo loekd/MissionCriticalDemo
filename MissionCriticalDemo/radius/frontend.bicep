@@ -10,7 +10,7 @@ param application string
 param containerRegistry string = 'acrradius.azurecr.io'
 
 @description('The host and port on which the Dispatch API is exposed.')
-param dispatchHostAndPort string = 'http://localhost:8080'
+param dispatchApiHostAndPort string = 'http://localhost:8080'
 
 @description('The k8s namespace name (leave empty for local deployments).')
 param kubernetesNamespace string
@@ -38,7 +38,7 @@ resource configMap 'core/ConfigMap@v1' = {
         "ValidateAuthority": false
       },
       "DispatchApi": {
-        "Endpoint": "''', dispatchHostAndPort, '''"
+        "Endpoint": "''', dispatchApiHostAndPort, '''"
       }
     }
     ''')

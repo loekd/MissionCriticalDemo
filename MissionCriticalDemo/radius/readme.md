@@ -74,22 +74,29 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
     - `rad install kubernetes` or `rad install kubernetes --reinstall`
 - Install Dapr
     - `dapr init -k`
+- Create k8s namespace
+    - `kubectl create ns local-radius`
 - Create Radius resource group
-    - `rad group create local`
+    - `rad group create default`
 - Create local environment inside group
-    - `rad env create local -g local`
+    - `rad env create local -g default`
 - Deploy local recipes
-    - `rad recipe register pubsubRecipe --environment local --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/redispubsub:0.1.0 --group local`
-    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local`
-    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local`
-    - `rad recipe register jaegerRecipe --environment local --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0 --group local`
+    - `rad recipe register pubsubRecipe --environment local --resource-type 'Applications.Dapr/pubSubBrokers' --template-kind bicep --template-path acrradius.azurecr.io/recipes/redispubsub:0.1.0 --group default`
+    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group default`
+    - `rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group default`
+    - `rad recipe register jaegerRecipe --environment local --resource-type 'Applications.Core/extenders' --template-kind bicep --template-path acrradius.azurecr.io/recipes/jaeger:0.1.0 --group default`
 ## Run
 
-- Deploy plant API
+- Set kubectl context if needed:
     - `kubectl config use-context k3d-mycluster`    
-    - `rad run .\plant.bicep -e local -g local --parameters kubernetesNamespace=local-radius`
-- Deploy dispatch api
-    - `rad run .\dispatch.bicep -e local -g local --parameters kubernetesNamespace=local-radius`
+- Deploy the Plant API:
+    - `rad deploy ./plant.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
+- Run the Dispatch api:
+    - Codespaces:
+        - `rad run ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius --parameters dispatchApiHostAndPort=https://$CODESPACE_NAME-8080.app.github.dev`
+    - K8s on localhost:
+        `rad run ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
+- If you get `"message": "Container state is 'Terminated' Reason: Error, Message: "` errors, try run & deploy again until it works
 
 # Azure
 

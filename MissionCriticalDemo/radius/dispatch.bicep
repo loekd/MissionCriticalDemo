@@ -9,16 +9,18 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The k8s namespace name (leave empty for local deployments).')
+@description('The k8s namespace name (bug prevents usage of variable).')
 param kubernetesNamespace string
+
+@description('The host and port on which the Dispatch API will be exposed.')
+param dispatchApiHostAndPort string = 'http://localhost:8080'
+
+var dispatchApiPort = 8080
 
 import kubernetes as kubernetes {
   kubeConfig: ''
   namespace: kubernetesNamespace
 }
-
-var dispatchApiPort = 8080
-
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
   name: 'shared'
@@ -169,6 +171,7 @@ module frontend 'frontend.bicep' = {
     application: application
     containerRegistry: containerRegistry
     kubernetesNamespace: kubernetesNamespace
+    dispatchApiHostAndPort: dispatchApiHostAndPort
   }
 }
 
