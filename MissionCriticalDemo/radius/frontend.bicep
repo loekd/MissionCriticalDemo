@@ -9,8 +9,8 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The host and port on which the Dispatch API is exposed.')
-param dispatchApiHostAndPort string = 'http://localhost:8080'
+@description('The host and port on which the Dispatch API is exposed (through the gateway).')
+param dispatchApiHostAndPort string = 'http://localhost:80'
 
 @description('The k8s namespace name (leave empty for local deployments).')
 param kubernetesNamespace string
@@ -91,7 +91,32 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
   }
 }
 
+resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' existing = {
+  name: 'dispatchapi'
+}
 
-output frontendPort int = frontendPort
-output frontendName string = frontend.name
+
+//Application gateway 
+resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
+  name: 'gateway'
+  properties: {
+    application: application 
+    environment: environment
+    routes: [
+      {
+        path: '/api' //Dispatch REST API
+        destination: 'http://${dispatch_api.name}:${dispatch_api.properties.container.ports.web.containerPort}'
+      }
+      {
+        path: '/dispatchhub' //Dispatch websocket
+        destination: 'http://${dispatch_api.name}:${dispatch_api.properties.container.ports.web.containerPort}'
+      }      
+      {
+        path: '/' //frontend index.html
+        destination: 'http://${frontend.name}:${frontend.properties.container.ports.web.containerPort}'
+      }
+    ]
+  }
+}
+
 

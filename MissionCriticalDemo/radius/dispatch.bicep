@@ -12,9 +12,6 @@ param containerRegistry string = 'acrradius.azurecr.io'
 @description('The k8s namespace name (bug prevents usage of variable).')
 param kubernetesNamespace string
 
-@description('The host and port on which the Dispatch API will be exposed.')
-param dispatchApiHostAndPort string = 'http://localhost:8080'
-
 var dispatchApiPort = 8080
 
 import kubernetes as kubernetes {
@@ -159,46 +156,5 @@ resource gisStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-previe
         appId: 'dispatchapi'
       }
     }
-  }
-}
-
-
-//Frontend module, so we can test it against the dispatch api.
-module frontend 'frontend.bicep' = {
-  name: 'frontend'
-  params: {
-    environment: environment
-    application: application
-    containerRegistry: containerRegistry
-    kubernetesNamespace: kubernetesNamespace
-    dispatchApiHostAndPort: dispatchApiHostAndPort
-  }
-}
-
-
-//Application gateway 
-resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
-  name: 'gateway'
-  properties: {
-    application: application 
-    environment: environment
-    hostname: {
-      // Omitting hostname properties results in gatewayname.appname.PUBLIC_HOSTNAME_OR_IP.nip.io
-
-      // Results in prefix.appname.PUBLIC_HOSTNAME_OR_IP.nip.io
-      prefix: ''
-      // Alternately you can specify your own hostname that you've configured externally
-      //fullyQualifiedHostname: 'hostname.radapp.io'
-    }
-    routes: [
-      {
-        path: '/api'
-        destination: 'http://${dispatch_api.name}:${dispatchApiPort}'
-      }
-      {
-        path: '/'
-        destination: 'http://${frontend.outputs.frontendName}:${frontend.outputs.frontendPort}'
-      }
-    ]
   }
 }

@@ -69,7 +69,7 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
     - `winget install k3d`
         - `k3d cluster create mycluster`
     - Register it inside `config.yaml` in profile \.rad\ as `local`
-    - Select it: `rad workspace switch local`
+    - Select it: `rad workspace switch local` (or whatever workspace name you used)
 - Install Radius control plane
     - `rad install kubernetes` or `rad install kubernetes --reinstall`
 - Install Dapr
@@ -78,6 +78,9 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
     - `kubectl create ns local-radius`
 - Create Radius resource group
     - `rad group create default`
+
+        Make sure this group name corresponds with the `scope` element inside the config.yaml file, for the current workspace:
+        - `scope: /planes/radius/local/resourceGroups/default`
 - Create local environment inside group
     - `rad env create local -g default`
 - Deploy local recipes
@@ -91,12 +94,18 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
     - `kubectl config use-context k3d-mycluster`    
 - Deploy the Plant API:
     - `rad deploy ./plant.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
-- Run the Dispatch api:
+- Deploy the Dispatch api:
+    - `rad deploy ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
+    - If you get `"message": "Container state is 'Terminated' Reason: Error, Message: "` errors, try run & deploy again until it works
+- Run the Frontend and Gateway:
     - Codespaces:
-        - `rad run ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius --parameters dispatchApiHostAndPort=https://$CODESPACE_NAME-8080.app.github.dev`
-    - K8s on localhost:
-        `rad run ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
-- If you get `"message": "Container state is 'Terminated' Reason: Error, Message: "` errors, try run & deploy again until it works
+        - `rad run ./frontend.bicep -e local -g default --parameters kubernetesNamespace=local-radius --parameters dispatchApiHostAndPort=https://$CODESPACE_NAME-8080.app.github.dev`
+        - Turn dispatch port to public (to allow CORS)
+            `gh codespace ports visibility 8080:public -c $CODESPACE_NAME`
+    - Localhost:        
+        - `rad run ./frontend.bicep -e local -g default --parameters kubernetesNamespace=local-radius` (access trough gateway)
+        - `rad run ./frontend.bicep -e local -g default --parameters kubernetesNamespace=local-radius --parameters dispatchApiHostAndPort=8080` (access directly)        
+    - Please note that the Gateway breaks signalR after 15s
 
 # Azure
 
