@@ -119,19 +119,11 @@ services:
     networks:
       - mission-critical-network
 
+  # otel forwarder instead of local jaeger
   # zipkin:
-  #   container_name: "zipkin"
-  #   image: "openzipkin/zipkin:2.23.4"
-  #   ports:
-  #     - 9412:9411
-  #   networks:
-  #     - mission-critical-network
-
-  # otel:
   #   container_name: "otel"
   #   image: otel/opentelemetry-collector-contrib
   #   command: [
-  #     "/otelcol-contrib",
   #     "--config=/conf/otel-collector-config.yaml"
   #   ]
   #   privileged: true
@@ -140,7 +132,7 @@ services:
   #     - 4318:4318
   #     - 9413:9411
   #   volumes:
-  #     - ./components/otel-collector-config.yaml:/conf/otel-collector-config.yaml
+  #     - ./config/otel-collector-config.yaml:/conf/otel-collector-config.yaml
   #   networks:
   #     - mission-critical-network
 
