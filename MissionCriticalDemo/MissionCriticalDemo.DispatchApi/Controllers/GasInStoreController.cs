@@ -1,13 +1,8 @@
 ﻿using Dapr;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Identity.Web.Resource;
-using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.DispatchApi.Services;
-using MissionCriticalDemo.Messages;
-using static MissionCriticalDemo.Shared.Constants;
 
 namespace MissionCriticalDemo.DispatchApi.Controllers
 {
@@ -18,21 +13,14 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
     public class GasInStoreController : ControllerBase
     {
         private readonly IGasStorage _gasStorage;
-        private readonly IMappers _mappers;
-        private readonly IHubContext<DispatchHub> _dispatchHub;
-        private readonly IDistributedCache _cache;
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
-
         private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubSubscriptionName = "flowres";
 
-        public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, IMappers mappers, IHubContext<DispatchHub> dispatchHubContext, IDistributedCache cache, ILogger<DispatchController> logger)
+        public GasInStoreController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, ILogger<DispatchController> logger)
         {
             _gasStorage = gasStorage ?? throw new ArgumentNullException(nameof(gasStorage));
-            _mappers = mappers ?? throw new ArgumentNullException(nameof(mappers));
-            _dispatchHub = dispatchHubContext ?? throw new ArgumentNullException(nameof(dispatchHubContext));
-            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));

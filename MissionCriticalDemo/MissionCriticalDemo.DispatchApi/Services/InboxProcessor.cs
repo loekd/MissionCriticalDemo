@@ -66,7 +66,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
                 {
                     _logger.LogTrace("Processing customer change {RequestId} from customer {CustomerId}!", customerRequest.Data.RequestId, customerRequest.Data.CustomerId);
                     await ProcessCustomerRequest(customerRequest, stopToken);
-                    await DeleteInboxMessage(daprClient, customerRequest, stopToken);
+                    await MarkInboxMessageAsProcessed(daprClient, customerRequest, stopToken);
                 }
             }
         }
@@ -82,7 +82,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
             return daprClient.QueryStateAsync<CustomerRequest>(_stateStoreName, query, cancellationToken: cancellationToken);
         }
 
-        private static async Task DeleteInboxMessage(DaprClient daprClient, StateQueryItem<CustomerRequest> customerRequest, CancellationToken cancellationToken)
+        private static async Task MarkInboxMessageAsProcessed(DaprClient daprClient, StateQueryItem<CustomerRequest> customerRequest, CancellationToken cancellationToken)
         {
             //Should not delete the inbox message, but mark it as processed, so we can detect duplicate messages.
             //This is a simple example, so we delete it.

@@ -1,13 +1,7 @@
-﻿using Dapr;
-using Dapr.Client;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Identity.Web.Resource;
-using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.DispatchApi.Services;
-using MissionCriticalDemo.Messages;
-using System.Text.Json;
 
 namespace MissionCriticalDemo.DispatchApi.Controllers
 {
@@ -20,8 +14,6 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
         private readonly IGasStorage _gasStorage;
         private readonly ILogger<DispatchController> _logger;
         private readonly Guid? _userId;
-
-
 
         public DispatchController(IGasStorage gasStorage, IHttpContextAccessor contextAccessor, ILogger<DispatchController> logger)
         {
@@ -41,13 +33,21 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             _logger.LogTrace("Storing validated message with id {RequestId} from customer {CustomerId} in outbox", request.RequestId, _userId);
             try
             {
-                //validate
+                //validate customer amount
                 int delta = request.Direction == Shared.Enums.FlowDirection.Inject ? request.AmountInGWh : 0 - request.AmountInGWh;
                 var currentTotal = await _gasStorage.GetGasInStore(_userId.GetValueOrDefault());
                 if (currentTotal + delta < 0)
                 {
                     throw new InvalidOperationException($"Unable to withdraw more gas ({delta}) than customer {_userId} currently has in store ({currentTotal}).");
                 }
+
+                //validate max fill level using cached data
+                var maxFillLevel = await _gasStorage.GetCachedMaxFillLevel();
+                if (maxFillLevel.HasValue && currentTotal + delta > maxFillLevel.Value)
+                {
+                    throw new InvalidOperationException($"Unable to inject more gas ({delta}) than the maximum fill level ({maxFillLevel.Value}).");
+                }
+
                 //process 
                 await _gasStorage.ProcessRequest(_userId.GetValueOrDefault(), request);
             }

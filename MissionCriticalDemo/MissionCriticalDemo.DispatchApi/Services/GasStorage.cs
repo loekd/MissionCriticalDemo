@@ -60,6 +60,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
             if (!int.TryParse(await cache.GetStringAsync(CacheKeyFillLevel), out currentTotal))
             {
                 logger.LogWarning("Failed to get gas in store from cache.");
+                return null;
             }
             return currentTotal;
         }
@@ -67,9 +68,10 @@ namespace MissionCriticalDemo.DispatchApi.Services
         public async Task<int?> GetCachedMaxFillLevel()
         {
             int maxFillLevel;
-            if (!int.TryParse(await cache.GetStringAsync(CacheKeyFillLevel), out maxFillLevel))
+            if (!int.TryParse(await cache.GetStringAsync(CacheKeyMaximumFillLevel), out maxFillLevel))
             {
                 logger.LogWarning("Failed to get maximum fill level from cache.");
+                return null;
             }
             return maxFillLevel;
         }
