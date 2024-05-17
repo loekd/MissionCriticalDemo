@@ -9,8 +9,8 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The k8s namespace name (leave empty for local deployments).')
-param kubernetesNamespace string
+@description('The k8s namespace name.')
+var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
 
 var plantApiPort = 8082
 
@@ -32,6 +32,7 @@ import kubernetes as localKubernetes {
 resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   metadata: {
     name: 'plantdaprconfig'
+    namespace: kubernetesNamespace
   }
   spec: {
     tracing: {

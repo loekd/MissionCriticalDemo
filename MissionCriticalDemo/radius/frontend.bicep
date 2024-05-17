@@ -12,8 +12,8 @@ param containerRegistry string = 'acrradius.azurecr.io'
 @description('The host and port on which the Dispatch API is exposed (through the gateway).')
 param dispatchApiHostAndPort string = 'http://localhost:80'
 
-@description('The k8s namespace name (leave empty for local deployments).')
-param kubernetesNamespace string
+@description('The k8s namespace name.')
+var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
 
 var frontendPort = 80
 var volumeName = 'scripts'
@@ -27,6 +27,7 @@ import kubernetes as kubernetes {
 resource configMap 'core/ConfigMap@v1' = {
   metadata: {
     name: 'frontend-scripts'
+    namespace: kubernetesNamespace
   }
   data: {
     #disable-next-line prefer-interpolation

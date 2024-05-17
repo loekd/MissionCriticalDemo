@@ -9,8 +9,8 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The k8s namespace name (bug prevents usage of variable).')
-param kubernetesNamespace string
+@description('The k8s namespace name.')
+var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
 
 var dispatchApiPort = 8080
 
@@ -83,7 +83,8 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
 // Dapr configuration for telemetry through Jaeger (zipkin endpoint)
 resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   metadata: {
-    name: 'dispatchdaprconfig'    
+    name: 'dispatchdaprconfig'  
+    namespace: kubernetesNamespace
   }
   spec: {
     tracing: {
