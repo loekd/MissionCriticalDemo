@@ -91,11 +91,11 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
 ## Run
 
 - Set kubectl context if needed:
-    - `kubectl config use-context k3d-mycluster`    
+    - `kubectl config use-context docker-desktop`    
 - Deploy the Plant API:
-    - `rad deploy ./plant.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
+    - `rad deploy ./plant.bicep -e local -g default`
 - Deploy the Dispatch api:
-    - `rad deploy ./dispatch.bicep -e local -g default --parameters kubernetesNamespace=local-radius`
+    - `rad deploy ./dispatch.bicep -e local -g default`
     - If you get `"message": "Container state is 'Terminated' Reason: Error, Message: "` errors, try run & deploy again until it works
 - Run the Frontend and Gateway:
     - Codespaces:
@@ -103,9 +103,10 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
         - Turn dispatch port to public (to allow CORS)
             `gh codespace ports visibility 8080:public -c $CODESPACE_NAME`
     - Localhost:        
-        - `rad run ./frontend.bicep -e local -g default` (access trough gateway)
-        - `rad run ./frontend.bicep -e local -g default --parameters dispatchApiHostAndPort=8080` (access directly)        
+        - `rad run ./frontend.bicep -e local -g default --parameters hostName=localhost` (access trough gateway)
     - Please note that the Gateway breaks signalR after 15s
+        - fix: `kubectl patch httpproxy dispatchapi -n local-radius --type='json' -p='[{"op": "add", "path": "/spec/routes/0/enableWebsockets", "value": true}]'`
+        - This can block redeployments, so delete the custom resource if you see any errors about 'patch httpproxy'
 
 # Azure
 
@@ -133,7 +134,7 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
 
 - Deploy plant API
     - `kubectl config use-context aksradius-admin`
-    - `rad workspace switch default`
+    - `rad workspace switch aks`
     - `rad deploy .\plant.bicep -e azure -g azure`
 - Deploy dispatch api
     - `rad deploy .\dispatch.bicep -e azure -g azure`
@@ -141,3 +142,4 @@ Run `kubectl run bb --image=busybox -i --tty --restart=Never -n default` inside 
 - Run frontend:        
     - `rad run ./frontend.bicep -e azure -g azure` (access trough gateway)       
     - Please note that the Gateway currently breaks signalR after 15s
+        - fix: `kubectl patch httpproxy dispatchapi -n azure-radius --type='json' -p='[{"op": "add", "path": "/spec/routes/0/enableWebsockets", "value": true}]'`

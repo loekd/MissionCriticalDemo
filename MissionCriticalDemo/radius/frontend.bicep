@@ -9,21 +9,41 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The host and port on which the Dispatch API is exposed (through the gateway).')
-param dispatchApiHostAndPort string = 'http://localhost:80'
+@description('Indicates whether to use HTTPS for the Dispatch API. (default: true)')
+param useHttps bool = true
+
+@description('The host name of the application.')
+param hostName string = 'demo.loekd.com'
+
+@description('The name of the environment.')
+var environmentName = split(environment, '/')[9]
+
+@description('The name of the application.')
+var applicationName = split(application, '/')[9]
 
 @description('The k8s namespace name.')
-var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
+var kubernetesNamespace = '${environmentName}-${applicationName}'
 
+@description('The host and port on which the Dispatch API is exposed (through the gateway).')
+var dispatchApiHostAndPort = useHttps ? 'https://${hostName}' : 'http://${hostName}'
+
+@description('The port on which the frontend is exposed internally.')
 var frontendPort = 80
+
+@description('The name of the volume to mount the ConfigMap to.')
 var volumeName = 'scripts'
+
+@description('The name of the frontend container.')
 var frontendContainerName = 'frontend'
 
+// import the kubernetes module
 import kubernetes as kubernetes {
   kubeConfig: ''
   namespace: kubernetesNamespace
 }
 
+// Create a ConfigMap with the frontend appsettings.json. This is mounted to the frontend container.
+// It points to the public endpoint of the Dispatch API.
 resource configMap 'core/ConfigMap@v1' = {
   metadata: {
     name: 'frontend-scripts'
@@ -92,19 +112,20 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
   }
 }
 
+// Get existing Dispatch API to locate its internal port
 resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' existing = {
   name: 'dispatchapi'
 }
 
 
-//Application gateway 
+//Application gateway for ingress and TLS offloading
 resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
   name: 'gateway'
   properties: {
     application: application 
     environment: environment
     hostname: {
-      fullyQualifiedHostname: 'demo.loekd.com'
+      fullyQualifiedHostname: hostName
     }
     tls: {
       sslPassthrough: false
@@ -127,6 +148,7 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
   }
 }
 
+// Secret store for TLS certificate, used by the ingress controller
 resource appCert 'Applications.Core/secretStores@2023-10-01-preview' = {
   name: 'appcert'
   properties:{
