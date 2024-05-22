@@ -103,6 +103,13 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
   properties: {
     application: application 
     environment: environment
+    hostname: {
+      fullyQualifiedHostname: 'demo.loekd.com'
+    }
+    tls: {
+      sslPassthrough: false
+      certificateFrom: appCert.id
+    }
     routes: [
       {
         path: '/api' //Dispatch REST API
@@ -117,6 +124,23 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
         destination: 'http://${frontend.name}:${frontend.properties.container.ports.web.containerPort}'
       }
     ]
+  }
+}
+
+resource appCert 'Applications.Core/secretStores@2023-10-01-preview' = {
+  name: 'appcert'
+  properties:{
+    application: application
+    environment: environment
+    type: 'certificate'
+    data: {
+      'tls.key': {
+        value: loadTextContent('privkey.pem')
+      }
+      'tls.crt': {
+        value: loadTextContent('fullchain.pem')
+      }
+    }
   }
 }
 

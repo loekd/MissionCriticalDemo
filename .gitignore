@@ -389,3 +389,7 @@ override.tf.json
 # Terragrunt debug output
 terragrunt-debug.tfvars.json
 **/*prepare.md
+MissionCriticalDemo/radius/cert.pem
+MissionCriticalDemo/radius/chain.pem
+MissionCriticalDemo/radius/fullchain.pem
+MissionCriticalDemo/radius/privkey.pem
