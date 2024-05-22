@@ -30,6 +30,8 @@ import kubernetes as kubernetes {
   namespace: context.runtime.kubernetes.namespace
 }
 
+var daprType = 'state.mongodb'
+var daprVersion = 'v1'
 var host = '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local:${port}'
 var uniqueName = 'mongo-${uniqueString(context.resource.id)}'
 var port = 27017
@@ -199,26 +201,6 @@ resource svc 'core/Service@v1' = {
   }
 }
 
-// resource stateStore 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-//   name: uniqueName
-//   properties: {
-//     environment: context.environment
-//     application: context.application
-//     resourceProvisioning: 'manual'
-//     type: 'state.mongodb'
-//     version: 'v1'
-//     metadata: {
-//       host: '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local'
-//       databaseName: databaseName
-//       collectionName: context.resource.name
-//       username: null
-//       password: null
-//       operationTimeout: '30s'
-//       params: replicaset ? '?replicaSet=rs0': ''
-//     }
-//   }
-// }
-
 resource daprComponent 'dapr.io/Component@v1alpha1' = {
   metadata: {
     name: context.resource.name
@@ -251,8 +233,8 @@ resource daprComponent 'dapr.io/Component@v1alpha1' = {
         value: replicaset ? '?replicaSet=rs0' : ''
       }
     ]
-    type: 'state.mongodb'
-    version: 'v1'
+    type: daprType
+    version: daprVersion
   }
 }
 
@@ -263,6 +245,7 @@ output result object = {
   resources: [
     '/planes/kubernetes/local/namespaces/${svc.metadata.namespace}/providers/core/Service/${svc.metadata.name}'
     '/planes/kubernetes/local/namespaces/${mongo.metadata.namespace}/providers/apps/Deployment/${mongo.metadata.name}'
+    '/planes/kubernetes/local/namespaces/${daprComponent.metadata.namespace}/providers/dapr.io/Component/${daprComponent.metadata.name}'
   ]
   values: {
     host: '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local'
@@ -270,6 +253,10 @@ output result object = {
     username: username
     database: databaseName
     replicaset: replicaset
+    type: daprType
+    version: daprVersion
+    metadata: daprComponent.spec.metadata
+    
   }
   secrets: {
     // Temporarily workaround until secure outputs are added
@@ -281,6 +268,11 @@ output result object = {
 }
 
 //deploying the recipe can be done by this command:
-//rad bicep publish --file local_statestore_recipe.bicep --target br:acrradius.azurecr.io/recipes/localstatestore:0.1.0
+//rad bicep publish --file local_statestore_recipe.bicep --target br:acrradius.azurecr.io/recipes/localstatestore:0.1.1
+
 //rad recipe register stateStoreRecipe --environment azure --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group azure
 //rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Datastores/mongoDatabases' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.0 --group local
+
+
+//rad recipe register stateStoreRecipe --environment azure --resource-type 'Applications.Dapr/stateStores' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.1 --group azure
+//rad recipe register stateStoreRecipe --environment local --resource-type 'Applications.Dapr/stateStores' --template-kind bicep --template-path acrradius.azurecr.io/recipes/localstatestore:0.1.1 --group local

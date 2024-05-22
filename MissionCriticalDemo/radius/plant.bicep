@@ -9,8 +9,14 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
+@description('The name of the environment.')
+var environmentName = split(environment, '/')[9]
+
+@description('The name of the application.')
+var applicationName = split(application, '/')[9]
+
 @description('The k8s namespace name.')
-var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
+var kubernetesNamespace = '${environmentName}-${applicationName}'
 
 var plantApiPort = 8082
 
@@ -68,7 +74,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
     }
     connections: {
       plant_state: {
-        source: plantStateStore.id
+        source: plant_state.id
       }
       dispatchpubsub: {
         source: shared.outputs.pubsub.id
@@ -96,25 +102,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
 }
 
 // state store for plant API (managed by Radius)
-// resource plant_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
-//   name: 'plantstate'
-//   properties: {
-//     environment: environment
-//     application: application
-//     resourceProvisioning: 'manual'
-//     type: 'state.mongodb'
-//     version: 'v1'
-//     metadata: {
-//       host: '${plantStateStore.properties.host}:${plantStateStore.properties.port}'
-//       databaseName: plantStateStore.properties.database
-//       collectionName: plantStateStore.name
-//       username: null
-//       password: null
-//     }
-//   }
-// }
-
-resource plantStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
+resource plant_state 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'plantstate'
   properties: {
     environment: environment

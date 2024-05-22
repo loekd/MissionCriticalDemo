@@ -9,15 +9,22 @@ param application string
 @description('The container registry name (leave empty for local deployments).')
 param containerRegistry string = 'acrradius.azurecr.io'
 
-@description('The k8s namespace name.')
-var kubernetesNamespace = '${split(environment, '/')[9]}-radius'
 
 var dispatchApiPort = 8080
+@description('The name of the environment.')
+var environmentName = split(environment, '/')[9]
+
+@description('The name of the application.')
+var applicationName = split(application, '/')[9]
+
+@description('The k8s namespace name.')
+var kubernetesNamespace = '${environmentName}-${applicationName}'
 
 import kubernetes as kubernetes {
   kubeConfig: ''
   namespace: kubernetesNamespace
 }
+
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
   name: 'shared'
@@ -83,7 +90,7 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
 // Dapr configuration for telemetry through Jaeger (zipkin endpoint)
 resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   metadata: {
-    name: 'dispatchdaprconfig'  
+    name: 'dispatchdaprconfig'
     namespace: kubernetesNamespace
   }
   spec: {
@@ -99,8 +106,8 @@ resource daprConfig 'dapr.io/Configuration@v1alpha1' = {
   }
 }
 
-// Dapr state store for outbox (queryable)
-resource outboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
+// Dapr state store for outbox (queryable, managed by Radius)
+resource outboxStateStore 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'outboxstate'
   properties: {
     environment: environment
@@ -121,8 +128,8 @@ resource outboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-pre
   ]
 }
 
-// Dapr state store for inbox (queryable)
-resource inboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
+// Dapr state store for inbox (queryable, managed by Radius)
+resource inboxStateStore 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'inboxstate'
   properties: {
     environment: environment
@@ -142,8 +149,8 @@ resource inboxStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-prev
   ]
 }
 
-// Dapr state store for gas in store (not queryable)
-resource gisStateStore 'Applications.Datastores/mongoDatabases@2023-10-01-preview' = {
+// Dapr state store for gas in store (not queryable, managed by Radius)
+resource gisStateStore 'Applications.Dapr/stateStores@2023-10-01-preview' = {
   name: 'gasinstorestate'
   properties: {
     environment: environment

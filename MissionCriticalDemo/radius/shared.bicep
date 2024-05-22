@@ -9,8 +9,39 @@ param environment string
 param application string
 
 var parameters = contains(environment, 'azure') ? {
-    location: 'northeurope'
-  } : {}
+  location: 'northeurope'
+} : {}
+
+@description('The name of the environment.')
+var environmentName = split(environment, '/')[9]
+
+@description('The name of the application.')
+var applicationName = split(application, '/')[9]
+
+@description('The k8s namespace name.')
+var kubernetesNamespace = '${environmentName}-${applicationName}'
+
+resource app 'Applications.Core/applications@2023-10-01-preview' = {
+  name: 'radius'
+  properties: {
+    environment: environment
+    extensions: [
+      {
+        kind: 'kubernetesNamespace'
+        namespace: kubernetesNamespace
+      }
+      {
+        kind: 'kubernetesMetadata'
+        labels: {
+          'team.name': 'StorageControl'
+          'team.costcenter': 'Netherlands'
+          'team.contact': 'storage_at_control.com'
+          'product.docs': 'readme.md'
+        }
+      }
+    ]
+  }
+}
 
 // Zipkin telemetry collection endpoint using 'jaeger_recipe' 
 // No resource for OTEL collectors in Radius at this time, so we are using an extender
