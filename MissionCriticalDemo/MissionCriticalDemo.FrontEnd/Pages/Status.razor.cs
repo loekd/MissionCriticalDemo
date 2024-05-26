@@ -124,7 +124,14 @@ public partial class StatusModel : ComponentBase
             StateHasChanged();
         });
 
-        await _hubConnection.StartAsync();
+        try 
+        {
+            await _hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar!.Add($"Request processing failed: '{ex.Message}'", Severity.Error);
+        }
     }
 
     protected async Task SubmitRequest()
