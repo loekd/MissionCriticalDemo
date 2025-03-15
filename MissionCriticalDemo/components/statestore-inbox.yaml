@@ -3,14 +3,10 @@ kind: Component
 metadata:
   name: inboxstate
 spec:
-  type: state.mongodb
+  type: state.postgresql
   version: v1
   metadata:
-  - name: host
-    value: dispatch_stateserver:27017
-  - name: databaseName
-    value: "dispatch"
-  - name: collectionName
+  - name: connectionString
+    value: "host=dispatch_stateserver;port=5432;database=dispatch;user id='sa';password='SomePassword'"
+  - name: tableName
     value: "inboxCollection"
-  - name: params
-    value: "?replicaSet=rs0"

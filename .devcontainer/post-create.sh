@@ -54,3 +54,6 @@ echo "Run \"rad init\" or \"rad run\" to run the containers using radius, from t
 
 ## mark repo as safe
 git config --global --add safe.directory /workspaces/MissionCriticalDemo
+
+## add dotnet dev cert
+dotnet dev-certs https
