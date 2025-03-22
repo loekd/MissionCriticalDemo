@@ -6,6 +6,11 @@ service:
       receivers: [otlp, jaeger, zipkin]
       processors: [batch, adaptive_sampling]
       exporters: [jaeger_storage_exporter]
+    metrics:
+      receivers: [ otlp ] 
+      processors: [ batch ]
+      exporters: [ debug ]
+
   telemetry:
     resource:
       service.name: jaeger
@@ -68,6 +73,7 @@ receivers:
     protocols:
       grpc:
       http:
+        endpoint: "0.0.0.0:4318"
 
   jaeger:
     protocols:
@@ -88,5 +94,5 @@ processors:
 exporters:
   jaeger_storage_exporter:
     trace_storage: some_store
-
+  debug:
       

@@ -80,6 +80,7 @@ var frontend = builder
     .AddProject<Projects.MissionCriticalDemo_Frontend>("Frontend")
     .WithExternalHttpEndpoints()
     .WithReference(dispatchApi)
+    .WithReference(jaeger.Resource.OtlpEndpoint)
     .WaitFor(jaeger);
 
 

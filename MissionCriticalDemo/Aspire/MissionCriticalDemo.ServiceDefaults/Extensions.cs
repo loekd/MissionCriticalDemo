@@ -5,6 +5,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
@@ -72,6 +73,18 @@ public static class Extensions
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        string? config = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
+        var useCustomOtlpExporter = !string.IsNullOrWhiteSpace(config);
+
+        if (useCustomOtlpExporter)
+        {
+            builder.Services
+                .AddOpenTelemetry()
+                .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri(config!));
+            return builder;
+        }
+        
+        //use defaults
         var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
         if (useOtlpExporter)

@@ -9,7 +9,9 @@ public static class DistributedApplicationBuilderExtensions
     private const string JaegerImageTag = "2.4.0";
     private const string HealthEndpointName = "healthEndpoint";
     private const string HealthEndpointPath = "/health/status";
-    private const string UserInterfaceEndpointName = "uiEndpoint";
+    public const string UserInterfaceEndpointName = "uiEndpoint";
+    public const string OtlpEndpointName = "otlpEndpoint";
+    public const string ZipkinEndpointName = "zipkinEndpoint";
 
     private const string ConfigFileVolume = "./OpenTelemetry/config.yaml";
     private const string ConfigFilePath = "/jaeger/config.yaml";
@@ -18,7 +20,7 @@ public static class DistributedApplicationBuilderExtensions
     /// Adds an Jaeger all in one container to the application model.
     /// </summary>
     public static IResourceBuilder<JaegerResource> AddJaeger(this IDistributedApplicationBuilder builder,
-      string name = "Jaeger", int zipkinPort = 9411)
+      string name = "Jaeger", int zipkinPort = 9411, int otlpPort = 55681)
     {
         builder.Services.TryAddLifecycleHook<JaegerResourceLifecycleHook>();
         var jaeger = new JaegerResource(name);
@@ -28,9 +30,10 @@ public static class DistributedApplicationBuilderExtensions
                       Image = JaegerImageName,
                       Tag = JaegerImageTag
                   })
-                  .WithHttpEndpoint(zipkinPort, 9411, JaegerResource.ZipkinEndpointName)
-                  .WithHttpEndpoint(port:13133, targetPort:13133, name: HealthEndpointName)
+                  .WithHttpEndpoint(port: zipkinPort, targetPort:9411, name: ZipkinEndpointName)
+                  .WithHttpEndpoint(port: 13133, targetPort:13133, name: HealthEndpointName)
                   .WithHttpEndpoint(port: 16686, targetPort: 16686, name: UserInterfaceEndpointName)
+                  .WithHttpEndpoint(port: otlpPort, targetPort: 4318, name: OtlpEndpointName)
                   .WithBindMount(ConfigFileVolume, ConfigFilePath, true)
                   .WithLifetime(ContainerLifetime.Persistent)
                   .ExcludeFromManifest()
