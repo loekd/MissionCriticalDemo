@@ -24,7 +24,7 @@ public static class HttpClientPolicies
     }
 
     /// <summary>
-    /// Calls to Ollama can take a long time, we need to set a timeout policy to match.
+    ///  can take a long time, we need to set a timeout policy to match.
     /// </summary>
     /// <param name="timeoutInSeconds"></param>
     /// <returns></returns>

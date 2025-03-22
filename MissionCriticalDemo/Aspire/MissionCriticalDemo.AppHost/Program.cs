@@ -2,6 +2,7 @@ using System.Diagnostics;
 using CommunityToolkit.Aspire.Hosting.Dapr;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using MissionCriticalDemo.AppHost.OpenTelemetry;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ var redis = builder
     .WithEndpoint(name:"redis-master", port: 6380, targetPort: 6379)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithRedisInsight();
+
+//Open telemetry collector
+var jaeger = builder.AddJaeger(zipkinPort: 9411);
 
 builder.AddDapr();
 
@@ -60,20 +64,23 @@ var dispatchApi = builder
     //.WithReference(postgresDb)
     .WithReference(dispatchPubSub)
     //.WithReference(redis)
-    .WithExternalHttpEndpoints();
+    .WithExternalHttpEndpoints()
+    .WaitFor(jaeger);
 
 var plantApi = builder
     .AddProject<Projects.MissionCriticalDemo_PlantApi>("PlantApi")
     .WithDaprSidecar()
     .WithReference(plantStateStore)
     //.WithReference(postgresDb)
-    .WithReference(dispatchPubSub);
+    .WithReference(dispatchPubSub)
     //.WithReference(redis);
+    .WaitFor(jaeger);
 
 var frontend = builder
     .AddProject<Projects.MissionCriticalDemo_Frontend>("Frontend")
     .WithExternalHttpEndpoints()
-    .WithReference(dispatchApi);
+    .WithReference(dispatchApi)
+    .WaitFor(jaeger);
 
 
 builder.Build().Run();
