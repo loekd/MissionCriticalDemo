@@ -16,6 +16,10 @@ using MissionCriticalDemo.Frontend.Components;
 using MissionCriticalDemo.Shared.Resilience;
 using MissionCriticalDemo.Shared.Services;
 using MudBlazor.Services;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Yarp.ReverseProxy.Transforms;
 
 namespace MissionCriticalDemo.Frontend;
@@ -73,7 +77,6 @@ public class Program
         //inject signalr connection builder
         builder.Services.AddTransient<IHubConnectionBuilder, HubConnectionBuilder>();
 
-
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -121,10 +124,33 @@ public class Program
 
         app.Run();
     }
+
+    
 }
 
-internal static class LoginLogoutEndpointRouteBuilderExtensions
+internal static class Extensions
 {
+    // internal static WebApplicationBuilder ConfigureTelemetry(this WebApplicationBuilder builder)
+    // {
+    //     // builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => 
+    //     //     tracing.AddAspNetCoreInstrumentation()
+    //     // );
+    //     // builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => 
+    //     //     metrics.AddAspNetCoreInstrumentation()
+    //     // );
+    //
+    //     builder.Services.AddOpenTelemetry()
+    //         .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri("http://jaeger"));
+    //         // .WithMetrics(metrics => 
+    //         //     metrics.AddAspNetCoreInstrumentation()
+    //         // )
+    //         // .WithTracing(tracing => 
+    //         //     tracing.AddAspNetCoreInstrumentation()
+    //         // );
+    //     
+    //     return builder;
+    // }
+    
     internal static IEndpointConventionBuilder MapLoginAndLogout(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("");
