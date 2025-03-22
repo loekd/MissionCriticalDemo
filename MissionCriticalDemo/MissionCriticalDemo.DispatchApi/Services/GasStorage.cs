@@ -79,9 +79,12 @@ namespace MissionCriticalDemo.DispatchApi.Services
             //we don't directly call the Plant API, but instead put a message in the outbox
             //this way we can retry if the Plant API is down
             var message = mappers.ToMessage(request, customerId);
+            string json = JsonSerializer.Serialize(message);
+            var buffer = System.Text.Encoding.UTF8.GetBytes(json);
+            
             var requests = new List<StateTransactionRequest>()
             {
-                new(request.RequestId.ToGuidString(), JsonSerializer.SerializeToUtf8Bytes(message), StateOperationType.Upsert),
+                new(request.RequestId.ToGuidString(), buffer, StateOperationType.Upsert),
                 //TODO: add additional state changes in same transaction if needed
             };
 

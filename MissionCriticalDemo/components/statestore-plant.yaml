@@ -3,12 +3,22 @@ kind: Component
 metadata:
   name: plantstate
 spec:
-  type: state.mongodb
+  type: state.postgresql
   version: v1
   metadata:
-  - name: host
-    value: plant_stateserver:27017
-  - name: databaseName
-    value: "plant"
-  - name: collectionName
-    value: "plantCollection"
+    - name: connectionString
+      value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
+    - name: tableName
+      value: "plantCollection"
+    - name: metadataTableName
+      value: "plantCollectionmetadata"
+#spec:
+#  type: state.mongodb
+#  version: v1
+#  metadata:
+#  - name: host
+#    value: plant_stateserver:27017
+#  - name: databaseName
+#    value: "plant"
+#  - name: collectionName
+#    value: "plantCollection"

@@ -1,4 +1,6 @@
-﻿using Dapr.Client;
+﻿using System.Text.Json;
+using Dapr.Client;
+using MissionCriticalDemo.DispatchApi.Controllers;
 using MissionCriticalDemo.Messages;
 
 namespace MissionCriticalDemo.DispatchApi.Services
@@ -61,9 +63,13 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
             if (response != null)
             {
-                foreach (var flowRequest in response.Results)
+                foreach (var result in response.Results)
                 {
-                    _logger.LogTrace("Publishing message id {RequestId} from customer {CustomerId}!", flowRequest.Data.RequestId, flowRequest.Data.CustomerId);
+                    var decoded = Convert.FromBase64String(result.Data);
+                    string json = System.Text.Encoding.UTF8.GetString(decoded, 0, decoded.Length);
+                    var flowRequest = JsonSerializer.Deserialize<MissionCriticalDemo.Messages.Request>(json)!;
+                    _logger.LogTrace("Publishing message id {RequestId} from customer {CustomerId}!",
+                        flowRequest.RequestId, flowRequest.CustomerId);
                     await PublishRequestMessage(daprClient, flowRequest, stopToken);
                     await DeleteOutboxMessage(daprClient, flowRequest, stopToken);
                 }
@@ -76,19 +82,35 @@ namespace MissionCriticalDemo.DispatchApi.Services
             return Task.CompletedTask;
         }
 
-        private static Task<StateQueryResponse<Request>> FetchOutboxItems(DaprClient daprClient, CancellationToken stopToken)
+        private async Task<StateQueryResponse<string>> FetchOutboxItems(DaprClient daprClient,
+            CancellationToken stopToken)
         {
-            return daprClient.QueryStateAsync<Request>(_stateStoreName, query, cancellationToken: stopToken);
+            try
+            {
+                var result = 
+                    await daprClient.QueryStateAsync<string>(_stateStoreName, query, cancellationToken: stopToken);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                string debug =
+                    await daprClient.GetStateAsync<string>(_stateStoreName, Guid.Parse("da95cb85-e946-46b7-b4ec-5952134d2d6b").ToGuidString(), cancellationToken: stopToken);
+                _logger.LogError(ex, "Failed to fetch outbox items. {Record}", debug);
+                throw;
+            }
         }
 
-        private static async Task DeleteOutboxMessage(DaprClient daprClient, StateQueryItem<Request> flowRequest, CancellationToken cancellationToken)
+        private static async Task DeleteOutboxMessage(DaprClient daprClient, Request flowRequest,
+            CancellationToken cancellationToken)
         {
-            await daprClient.DeleteStateAsync(_stateStoreName, flowRequest.Key, cancellationToken: cancellationToken);
+            await daprClient.DeleteStateAsync(_stateStoreName, flowRequest.RequestId.ToGuidString(), cancellationToken: cancellationToken);
         }
 
-        private static async Task PublishRequestMessage(DaprClient daprClient, StateQueryItem<Request> flowRequest, CancellationToken cancellationToken)
+        private static async Task PublishRequestMessage(DaprClient daprClient, Request flowRequest,
+            CancellationToken cancellationToken)
         {
-            await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, flowRequest.Data, cancellationToken: cancellationToken);
+            await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, flowRequest,
+                cancellationToken: cancellationToken);
         }
     }
 }

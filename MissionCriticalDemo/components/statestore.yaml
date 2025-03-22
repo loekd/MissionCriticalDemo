@@ -7,6 +7,8 @@ spec:
   version: v1
   metadata:
   - name: connectionString
-    value: "host=dispatch_stateserver;port=5432;database=dispatch;user id='sa';password='SomePassword'"
+    value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
   - name: tableName
     value: "dispatchCollection"
+  - name: metadataTableName
+    value: "dispatchCollectionmetadata" 
