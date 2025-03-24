@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MissionCriticalDemo.FrontEnd\MissionCriticalDemo.FrontEnd.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" />
   </ItemGroup>

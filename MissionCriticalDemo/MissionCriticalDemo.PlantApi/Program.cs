@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using MissionCriticalDemo.Messages;
 using MissionCriticalDemo.PlantApi.Services;
@@ -73,8 +74,10 @@ public class DaprRawPayloadInputFormatter : InputFormatter
 }
 
 
+[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")]
 public class RawMessage
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public string data { get; set; }
     public string datacontenttype { get; set; }
     public string id { get; set; }

@@ -59,7 +59,7 @@ namespace MissionCriticalDemo.PlantApi.Controllers
         [HttpPost("flowint_outbox")]
         public async Task<IActionResult> PostFromDaprOutbox([FromServices] DaprClient daprClient, [FromBody] Request request)
         {
-            int a = 23;
+            await Task.Delay(1);
             return Ok();
         }
 
