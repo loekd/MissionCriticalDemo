@@ -102,26 +102,32 @@ public partial class StatusModel : ComponentBase
             .WithUrl(hubUrl)
             .Build();
 
-        _hubConnection.On<string>("ReceiveMessage", (message) =>
+        _hubConnection.On<string>("ReceiveMessage", async message =>
         {
-            Console.WriteLine("Received message: {0}", message);
-
-            var response = JsonSerializer.Deserialize<Response>(message, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-            if (response == null) return;
-
-            if (response.Success)
+            await InvokeAsync(() =>
             {
-                //update total gas in store
-                CustomerGasInStore = response.TotalAmountInGWh;
-                OverallGasInStore = response.CurrentFillLevel;
-                Logger!.LogWarning("Received a flow response message id {ResponseId}.", response!.ResponseId);
-                Snackbar!.Add($"Request was processed. Success: {response.Success}", Severity.Info);
-            }
-            else
-            {
-                Snackbar!.Add($"Request processing failed", Severity.Error);
-            }
-            StateHasChanged();
+                Console.WriteLine("Received message: {0}", message);
+
+                var response =
+                    JsonSerializer.Deserialize<Response>(message,
+                        new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                if (response == null) return;
+
+                if (response.Success)
+                {
+                    //update total gas in store
+                    CustomerGasInStore = response.TotalAmountInGWh;
+                    OverallGasInStore = response.CurrentFillLevel;
+                    Logger!.LogWarning("Received a flow response message id {ResponseId}.", response!.ResponseId);
+                    Snackbar!.Add($"Request was processed. Success: {response.Success}", Severity.Info);
+                }
+                else
+                {
+                    Snackbar!.Add($"Request processing failed", Severity.Error);
+                }
+
+                StateHasChanged();
+            });
         });
 
         await _hubConnection.StartAsync();

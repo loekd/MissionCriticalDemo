@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ namespace MissionCriticalDemo.Shared.Services;
 /// <summary>
 /// Processes dispatching interaction.
 /// </summary>
-public interface IDispatchService : IService
+public interface IDispatchService 
 {
     Task SubmitRequest(Request request);
 
@@ -30,19 +31,31 @@ public class DispatchService(HttpClient httpClient, ILogger<DispatchService> log
     public async Task SubmitRequest(Request request)
     {
         logger.LogDebug("Submitting request {Amount} {Direction}", request.AmountInGWh, request.Direction);
+        using var source = new ActivitySource("Wasm Frontend");
+        using var activity = source.StartActivity(nameof(SubmitRequest), ActivityKind.Client);
+        activity?.AddEvent(new ActivityEvent("Submitting request SubmitRequest", DateTimeOffset.UtcNow));
         var response = await _httpClient.PostAsJsonAsync(DispatchEndpoint, request);
+        activity?.SetTag("StatusCode", response.StatusCode);
         response.EnsureSuccessStatusCode();
     }
 
     public Task<int> GetCustomerGasInStore()
     {
         logger.LogDebug("Fetching customer gas in store");
+        using var source = new ActivitySource("Wasm Frontend");
+        using var activity = source.StartActivity(nameof(GetCustomerGasInStore), ActivityKind.Client);
+        activity?.AddEvent(new ActivityEvent("Submitting request GetCustomerGasInStore", DateTimeOffset.UtcNow));
+        
         return _httpClient.GetFromJsonAsync<int>(CustomerGisEndpoint);
     }
 
     public Task<int> GetOverallGasInStore()
     {
         logger.LogDebug("Fetching overall gas in store");
+        using var source = new ActivitySource("Wasm Frontend");
+        using var activity = source.StartActivity(nameof(GetOverallGasInStore), ActivityKind.Client);
+        activity?.AddEvent(new ActivityEvent("Submitting request GetOverallGasInStore", DateTimeOffset.UtcNow));
+
         return _httpClient.GetFromJsonAsync<int>(OverallGisEndpoint);
     }
 

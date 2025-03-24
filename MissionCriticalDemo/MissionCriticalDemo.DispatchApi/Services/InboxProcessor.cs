@@ -1,7 +1,9 @@
-﻿using Dapr.Client;
+﻿using System.Text.Json;
+using Dapr.Client;
 using Microsoft.AspNetCore.SignalR;
 using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.Messages;
+using MissionCriticalDemo.Shared;
 using MissionCriticalDemo.Shared.Contracts;
 
 namespace MissionCriticalDemo.DispatchApi.Services
@@ -62,9 +64,13 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
             if (response != null)
             {
-                foreach (var customerRequest in response.Results)
+                foreach (var result in response.Results)
                 {
-                    _logger.LogTrace("Processing customer change {RequestId} from customer {CustomerId}!", customerRequest.Data.RequestId, customerRequest.Data.CustomerId);
+                    var decoded = Convert.FromBase64String(result.Data);
+                    string json = System.Text.Encoding.UTF8.GetString(decoded, 0, decoded.Length);
+                    var customerRequest = JsonSerializer.Deserialize<CustomerRequest>(json)!;
+                    
+                    _logger.LogTrace("Processing customer change {RequestId} from customer {CustomerId}!", customerRequest.RequestId, customerRequest.CustomerId);
                     await ProcessCustomerRequest(customerRequest, stopToken);
                     await DeleteInboxMessage(daprClient, customerRequest, stopToken);
                 }
@@ -77,19 +83,19 @@ namespace MissionCriticalDemo.DispatchApi.Services
             return Task.CompletedTask;
         }
 
-        private static Task<StateQueryResponse<CustomerRequest>> FetchInboxItems(DaprClient daprClient, CancellationToken cancellationToken)
+        private static Task<StateQueryResponse<string>> FetchInboxItems(DaprClient daprClient, CancellationToken cancellationToken)
         {
-            return daprClient.QueryStateAsync<CustomerRequest>(_stateStoreName, query, cancellationToken: cancellationToken);
+            return daprClient.QueryStateAsync<string>(_stateStoreName, query, cancellationToken: cancellationToken);
         }
 
-        private static async Task DeleteInboxMessage(DaprClient daprClient, StateQueryItem<CustomerRequest> customerRequest, CancellationToken cancellationToken)
+        private static async Task DeleteInboxMessage(DaprClient daprClient, CustomerRequest customerRequest, CancellationToken cancellationToken)
         {
             //Should not delete the inbox message, but mark it as processed, so we can detect duplicate messages.
             //This is a simple example, so we delete it.
-            await daprClient.DeleteStateAsync(_stateStoreName, customerRequest.Key, cancellationToken: cancellationToken);
+            await daprClient.DeleteStateAsync(_stateStoreName, customerRequest.RequestId.ToGuidString(), cancellationToken: cancellationToken);
         }
 
-        private async Task ProcessCustomerRequest(StateQueryItem<CustomerRequest> customerRequest, CancellationToken cancellationToken)
+        private async Task ProcessCustomerRequest(CustomerRequest? customerRequest, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var gasStorage = scope.ServiceProvider.GetRequiredService<IGasStorage>();
@@ -97,35 +103,35 @@ namespace MissionCriticalDemo.DispatchApi.Services
             var dispatchHub = scope.ServiceProvider.GetRequiredService<IHubContext<DispatchHub>>();
 
             //process response
-            if (customerRequest.Data.Success)
+            if (customerRequest != null)
             {
-                int delta = customerRequest.Data.Direction == Shared.Enums.FlowDirection.Inject ? customerRequest.Data.AmountInGWh : 0 - customerRequest.Data.AmountInGWh;
-                int currentAmount = await gasStorage.GetGasInStore(customerRequest.Data.CustomerId);
+                int delta = customerRequest.Direction == Shared.Enums.FlowDirection.Inject ? customerRequest.AmountInGWh : 0 - customerRequest.AmountInGWh;
+                int currentAmount = await gasStorage.GetGasInStore(customerRequest.CustomerId);
                 int newAmount = currentAmount + delta;
 
-                await gasStorage.SetGasInStore(customerRequest.Data.CustomerId, newAmount);
-                var contract = mappers.ToContract(customerRequest.Data, newAmount);
+                await gasStorage.SetGasInStore(customerRequest.CustomerId, newAmount);
+                var contract = mappers.ToContract(customerRequest, newAmount);
 
                 //cache new storage levels
-                await gasStorage.CacheFillLevel(customerRequest.Data.CurrentFillLevel);
-                await gasStorage.CacheMaxFillLevel(customerRequest.Data.MaxFillLevel);
+                await gasStorage.CacheFillLevel(customerRequest.CurrentFillLevel);
+                await gasStorage.CacheMaxFillLevel(customerRequest.MaxFillLevel);
 
                 //notify front-end
                 await dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson(), cancellationToken);
 
                 //log warning so it shows up:
-                _logger.LogWarning("Processed OK - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.Data.RequestId, customerRequest.Data.CustomerId, newAmount);
+                _logger.LogWarning("Processed OK - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.RequestId, customerRequest.CustomerId, newAmount);
             }
             else
             {
-                int currentAmount = await gasStorage.GetGasInStore(customerRequest.Data.CustomerId);
-                var contract = mappers.ToContract(customerRequest.Data, currentAmount, false);
+                int currentAmount = await gasStorage.GetGasInStore(customerRequest.CustomerId);
+                var contract = mappers.ToContract(customerRequest, currentAmount, false);
 
                 //notify front-end
                 await dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson(), cancellationToken);
 
                 //log warning so it shows up:
-                _logger.LogWarning("Processing Failed - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.Data.RequestId, customerRequest.Data.CustomerId, currentAmount);
+                _logger.LogWarning("Processing Failed - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.RequestId, customerRequest.CustomerId, currentAmount);
             }
         }
     }
