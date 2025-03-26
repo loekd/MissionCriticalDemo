@@ -81,6 +81,7 @@ var frontend = builder
     .WithExternalHttpEndpoints()
     .WithReference(dispatchApi)
     .WithReference(jaeger.Resource.OtlpEndpoint)
+    .WithReference(jaeger.Resource.ZipkinEndpoint)
     .WaitFor(jaeger);
 
 

@@ -21,7 +21,7 @@ public interface IDispatchService
 /// <summary>
 /// Processes dispatching interaction.
 /// </summary>
-public class DispatchService(HttpClient httpClient, ILogger<DispatchService> logger) : IDispatchService
+public class DispatchService(HttpClient httpClient, ActivitySource? source, ILogger<DispatchService> logger) : IDispatchService
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     private const string DispatchEndpoint = "api/dispatch";
@@ -30,33 +30,51 @@ public class DispatchService(HttpClient httpClient, ILogger<DispatchService> log
 
     public async Task SubmitRequest(Request request)
     {
-        logger.LogDebug("Submitting request {Amount} {Direction}", request.AmountInGWh, request.Direction);
-        using var source = new ActivitySource("Wasm Frontend");
-        using var activity = source.StartActivity(nameof(SubmitRequest), ActivityKind.Client);
+        using var activity = source?.StartActivity(nameof(SubmitRequest), ActivityKind.Client);
         activity?.AddEvent(new ActivityEvent("Submitting request SubmitRequest", DateTimeOffset.UtcNow));
-        var response = await _httpClient.PostAsJsonAsync(DispatchEndpoint, request);
-        activity?.SetTag("StatusCode", response.StatusCode);
-        response.EnsureSuccessStatusCode();
+        
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(DispatchEndpoint, request);
+            activity?.SetTag("StatusCode", response.StatusCode);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
+        {
+            activity?.AddException(ex);
+            throw;
+        }
     }
 
     public Task<int> GetCustomerGasInStore()
     {
-        logger.LogDebug("Fetching customer gas in store");
-        using var source = new ActivitySource("Wasm Frontend");
-        using var activity = source.StartActivity(nameof(GetCustomerGasInStore), ActivityKind.Client);
+        using var activity = source?.StartActivity(nameof(GetCustomerGasInStore), ActivityKind.Client);
         activity?.AddEvent(new ActivityEvent("Submitting request GetCustomerGasInStore", DateTimeOffset.UtcNow));
-        
-        return _httpClient.GetFromJsonAsync<int>(CustomerGisEndpoint);
+
+        try
+        {
+            return _httpClient.GetFromJsonAsync<int>(CustomerGisEndpoint);
+        }
+        catch (Exception ex)
+        {
+            activity?.AddException(ex);
+            throw;
+        }
     }
 
     public Task<int> GetOverallGasInStore()
     {
-        logger.LogDebug("Fetching overall gas in store");
-        using var source = new ActivitySource("Wasm Frontend");
-        using var activity = source.StartActivity(nameof(GetOverallGasInStore), ActivityKind.Client);
+        using var activity = source?.StartActivity(nameof(GetOverallGasInStore), ActivityKind.Client);
         activity?.AddEvent(new ActivityEvent("Submitting request GetOverallGasInStore", DateTimeOffset.UtcNow));
-
-        return _httpClient.GetFromJsonAsync<int>(OverallGisEndpoint);
+        try
+        {
+            return _httpClient.GetFromJsonAsync<int>(OverallGisEndpoint);
+        }
+        catch (Exception ex)
+        {
+            activity?.AddException(ex);
+            throw;
+        }
     }
 
     public static Task<HttpResponseMessage> FallbackGetCustomerGasInStore(Polly.Context context, CancellationToken cancellationToken)

@@ -12,13 +12,21 @@ spec:
       value: "plantCollection"
     - name: metadataTableName
       value: "plantCollectionmetadata"
+
+# cosmosdb component statestore
+#apiVersion: dapr.io/v1alpha1
+#kind: Component
+#metadata:
+#  name: plantstate
 #spec:
-#  type: state.mongodb
+#  type: state.azure.cosmosdb
 #  version: v1
 #  metadata:
-#  - name: host
-#    value: plant_stateserver:27017
-#  - name: databaseName
-#    value: "plant"
-#  - name: collectionName
-#    value: "plantCollection"
+#    - name: url
+#      value: ""
+#    - name: masterkey
+#      value: ""
+#    - name: database
+#      value: "plant"
+#    - name: collection
+#      value: "plantstate"

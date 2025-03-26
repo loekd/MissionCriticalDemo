@@ -120,11 +120,18 @@ public class Program
             .RequireAuthorization();
         app.MapForwarder("/dispatchhub/{**catch-all}", "http://dispatchapi", "/dispatchhub/{**catch-all}");
        
-        string? config = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
-        if (config is not null)
+        string? otlpConfig = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
+        if (otlpConfig is not null)
         {
-            app.MapForwarder("/v1/traces/{**catch-all}", config, "/v1/traces/{**catch-all}");
+            app.MapForwarder("/v1/traces/{**catch-all}", otlpConfig, "/v1/traces/{**catch-all}");
         }
+        
+        string? zipkinConfig = builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
+        if (zipkinConfig is not null)
+        {
+            app.MapForwarder("/zipkin/{**catch-all}", zipkinConfig, "/api/v2/spans/{**catch-all}");
+        }
+        
         
         app.MapGroup("/authentication").MapLoginAndLogout();
 

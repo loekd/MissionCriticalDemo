@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "components", "components", 
 		components\statestore-inbox.yaml = components\statestore-inbox.yaml
 		components\statestore-plant.yaml = components\statestore-plant.yaml
 		components\statestore.yaml = components\statestore.yaml
+		components\secrets.json = components\secrets.json
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MissionCriticalDemo.Messages", "MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj", "{4780E933-0664-44FB-8B2D-42FF2C2DE106}"

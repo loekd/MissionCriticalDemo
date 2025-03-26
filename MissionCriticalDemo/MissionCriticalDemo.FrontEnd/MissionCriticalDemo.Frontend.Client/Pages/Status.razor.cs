@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -7,6 +8,9 @@ using MissionCriticalDemo.Shared.Contracts;
 using MissionCriticalDemo.Shared.Enums;
 using MissionCriticalDemo.Shared.Services;
 using MudBlazor;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace MissionCriticalDemo.Frontend.Client.Pages;
 
@@ -159,6 +163,7 @@ public partial class StatusModel : ComponentBase
 
     protected async Task FetchCustomerGasInStore()
     {
+        //Test();
         CustomerGasInStore = null;
         try
         {
@@ -172,6 +177,28 @@ public partial class StatusModel : ComponentBase
         {
             Snackbar!.Add($"Fetch customer gas in store failed: {ex.Message}", Severity.Warning);
             Logger!.LogError("Failed to fetch customer status. Error: {ErrorMessage}", ex.Message);
+        }
+    }
+
+    private void Test()
+    {
+        using var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-otel"))
+            .AddSource("BlazorUI")
+            .AddZipkinExporter(o =>
+            {
+                o.Endpoint = new Uri("http://localhost:5054/zipkin");
+                o.ExportProcessorType = ExportProcessorType.Simple;
+            })
+            .Build();
+        using var source = new ActivitySource("BlazorUI");
+        using (var activity = source.StartActivity("Click", ActivityKind.Client))
+        {
+            activity?.AddEvent(new ActivityEvent("The count button was clicked"));
+
+            
+            activity?.SetTag("mouse.x", 123);
+            activity?.SetTag("mouse.y", 2323);
         }
     }
 

@@ -9,6 +9,9 @@ using MissionCriticalDemo.Shared.Resilience;
 using MissionCriticalDemo.Shared.Services;
 using MudBlazor;
 using MudBlazor.Services;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 
 namespace MissionCriticalDemo.Frontend.Client;
@@ -17,8 +20,45 @@ class Program
 {
     static async Task Main(string[] args)
     {
+        await Task.Delay(2000);
+        
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
+        
+        builder.Logging.SetMinimumLevel(LogLevel.Debug);
+        
+        //this approach is not working in WASM!
+        // builder.Services.AddOpenTelemetry()
+        //     .WithTracing(opt =>
+        //     {
+        //         opt.SetSampler(new AlwaysOnSampler());
+        //         opt.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-wasm"))
+        //             .AddSource(activitySource.Name);
+        //
+        //         opt.AddHttpClientInstrumentation();
+        //         opt.AddZipkinExporter(bld =>
+        //         {
+        //             bld.Endpoint = new Uri("http://localhost:5045/zipkin");
+        //             bld.ExportProcessorType = ExportProcessorType.Simple;
+        //         });
+        //         opt.AddConsoleExporter();
+        //     });
+        
+        var openTelemetry = Sdk.CreateTracerProviderBuilder()
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-otel"))
+            .AddSource("WasmFrontend")
+            .AddZipkinExporter(o =>
+            {
+                o.Endpoint = new Uri("http://localhost:5054/zipkin");
+                o.ExportProcessorType = ExportProcessorType.Simple;
+            })
+            .Build();
+        
+        // Add OpenTelemetry Tracing with Zipkin Exporter
+        var activitySource = new ActivitySource("WasmFrontend");
+        builder.Services.AddSingleton(activitySource);
+        builder.Services.AddSingleton(openTelemetry);
+        
         builder.Services.AddMudServices(config =>
         {
             config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.TopCenter;
@@ -48,7 +88,7 @@ class Program
         builder.Services.AddAuthorizationCore();
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddAuthenticationStateDeserialization();
-
+        
         await builder.Build().RunAsync();
     }
 }

@@ -13,19 +13,19 @@
         <MudText>Submit a request</MudText>
         <MudText Typo="Typo.body2">Request injection or withdrawal.</MudText>
 
-        <MudRadioGroup @bind-SelectedOption="Direction" T="FlowDirection">
-            <MudRadio Option="FlowDirection.Inject" Color="Color.Primary" Size="Size.Small" T="FlowDirection">Inject</MudRadio>
-            <MudRadio Option="FlowDirection.Withdraw" Color="Color.Primary" Size="Size.Small" T="FlowDirection">Withdraw</MudRadio>
+        <MudRadioGroup @bind-Value="Direction" T="FlowDirection">
+            <MudRadio Value="FlowDirection.Inject" Color="Color.Primary" Size="Size.Small" T="FlowDirection">Inject</MudRadio>
+            <MudRadio Value="FlowDirection.Withdraw" Color="Color.Primary" Size="Size.Small" T="FlowDirection">Withdraw</MudRadio>
         </MudRadioGroup>
 
         <MudTextField @bind-Value="Amount" Label="Amount (GWh)" Variant="Variant.Text"></MudTextField>
 
     </MudCardContent>
     <MudCardActions>
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="SubmitRequest" Disabled="@ButtonsDisabled">Submit request</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="SubmitRequest" Disabled="@ButtonsDisabled">Submit request</MudButton>
         &nbsp;
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchCustomerGasInStore" Disabled="@ButtonsDisabled">Fetch customer status</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="FetchCustomerGasInStore" Disabled="@ButtonsDisabled">Fetch customer status</MudButton>
         &nbsp;
-        <MudButton Variant="Variant.Filled" DisableElevation="true" Color="Color.Primary" @onclick="FetchOverallGasInStore" Disabled="@ButtonsDisabled">Fetch storage status</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" @onclick="FetchOverallGasInStore" Disabled="@ButtonsDisabled">Fetch storage status</MudButton>
     </MudCardActions>
 </MudCard>
