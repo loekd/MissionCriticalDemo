@@ -11,8 +11,8 @@ using System.Text.Json;
 
 namespace MissionCriticalDemo.DispatchApi.Controllers
 {
-    [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Api.AccessScope")]
-    [Authorize]
+    //[RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Api.AccessScope")]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DispatchController : ControllerBase
@@ -28,13 +28,16 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             _gasStorage = gasStorage ?? throw new ArgumentNullException(nameof(gasStorage));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
-            if (context.User?.Identity?.IsAuthenticated ?? false)
-            {
-                _userId = Guid.Parse(context.User.Claims.Single(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier).Value);
-            }
+            // var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
+            // if (context.User?.Identity?.IsAuthenticated ?? false)
+            // {
+            //     _userId = Guid.Parse(context.User.Claims.Single(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier).Value);
+            // }
+            _userId = new Guid("00000000-0000-0000-0000-000000000000");
+
         }
 
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> ProcessRequest(Shared.Contracts.Request request)
         {

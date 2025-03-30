@@ -4,6 +4,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
@@ -29,6 +30,14 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        //support running behind a reverse proxy:
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.All;
+            options.AllowedHosts.Add("*");
+        });
+
         builder.AddServiceDefaults(); //adds service discovery, resilience, health checks, and OpenTelemetry
 
         //Add health endpoint support
@@ -56,6 +65,29 @@ public class Program
                 options.Scope.Add("https://loekdb2c.onmicrosoft.com/b818d130-9845-4c80-b99c-f5b4b073a912/API.Access");
 
                 options.TokenValidationParameters.NameClaimType = "name";
+                //options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+                
+                // Explicitly set the RedirectUri
+                options.Events.OnRedirectToIdentityProvider = context =>
+                {
+                    var host = context.Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? 
+                            context.Request.Host.Value;
+                    
+                    var scheme = context.Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? 
+                                context.Request.Scheme;
+                    if(!string.IsNullOrWhiteSpace(host))
+                    {
+                        var currentUri = $"{scheme}://{host}";
+                        context.ProtocolMessage.RedirectUri = $"{currentUri}/signin-oidc"; 
+                        Console.WriteLine($"Set redirect URI to: {context.ProtocolMessage.RedirectUri}");
+                    }
+                    return Task.CompletedTask;
+                };
+                
+                options.Events.OnAuthenticationFailed += ctx => Task.CompletedTask;
+                options.Events.OnTokenValidated += ctx => Task.CompletedTask;
+                options.Events.OnAuthenticationFailed += ctx => Task.CompletedTask;
+                options.Events.OnMessageReceived += ctx => Task.CompletedTask;
             });
         
         //builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme);
@@ -71,14 +103,21 @@ public class Program
             .AddAuthenticationStateSerialization();
 
         builder.Services.AddMudServices();
-
+        
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.All;
+            options.AllowedHosts.Add("*");
+        });
+        
         //services
         builder.Services.AddSingleton<IDispatchService, DispatchService>();
         //inject signalr connection builder
         builder.Services.AddTransient<IHubConnectionBuilder, HubConnectionBuilder>();
 
         var app = builder.Build();
-
+        app.UseForwardedHeaders();
+        
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -98,8 +137,8 @@ public class Program
         app.UseAntiforgery();
         app.MapHealthChecks("/api/healthz");
 
-        // app.UseAuthentication();
-        // app.UseAuthorization();
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapStaticAssets();
         app.MapDefaultEndpoints();
@@ -114,10 +153,11 @@ public class Program
             transformBuilder.AddRequestTransform(async transformContext =>
             {
                 var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
+                Console.WriteLine($"Using access token: {accessToken?[..8] ?? "empty"}");
                 transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
             });
-        })
-            .RequireAuthorization();
+        });
+            //.RequireAuthorization();
         app.MapForwarder("/dispatchhub/{**catch-all}", "http://dispatchapi", "/dispatchhub/{**catch-all}");
        
         string? otlpConfig = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
@@ -126,7 +166,7 @@ public class Program
             app.MapForwarder("/v1/traces/{**catch-all}", otlpConfig, "/v1/traces/{**catch-all}");
         }
         
-        string? zipkinConfig = builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
+        string? zipkinConfig = builder.Configuration["ZIPKIN"] ?? builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
         if (zipkinConfig is not null)
         {
             app.MapForwarder("/zipkin/{**catch-all}", zipkinConfig, "/api/v2/spans/{**catch-all}");

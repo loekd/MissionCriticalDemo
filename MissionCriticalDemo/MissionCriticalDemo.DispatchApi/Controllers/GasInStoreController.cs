@@ -11,8 +11,8 @@ using static MissionCriticalDemo.Shared.Constants;
 
 namespace MissionCriticalDemo.DispatchApi.Controllers
 {
-    [RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Api.AccessScope")]
-    [Authorize]
+    //[RequiredScope(RequiredScopesConfigurationKey = "AzureAdB2C:Api.AccessScope")]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class GasInStoreController : ControllerBase
@@ -35,13 +35,15 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
-            if (context.User?.Identity?.IsAuthenticated ?? false)
-            {
-                _userId = Guid.Parse(context.User.Claims.Single(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier).Value);
-            }
+            // var context = contextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(contextAccessor));
+            // if (context.User?.Identity?.IsAuthenticated ?? false)
+            // {
+            //     _userId = Guid.Parse(context.User.Claims.Single(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier).Value);
+            // }
+            _userId = new Guid("00000000-0000-0000-0000-000000000000");
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetForCustomerId()
         {
@@ -63,6 +65,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             return Ok(currentTotal);
         }
 
+        [AllowAnonymous]
         [HttpGet("overall")]
         public async Task<IActionResult> GetGasInStore()
         {
@@ -70,6 +73,7 @@ namespace MissionCriticalDemo.DispatchApi.Controllers
             return Ok(currentTotal);
         }
 
+        [AllowAnonymous]
         [HttpGet("maxfilllevel")]
         public async Task<IActionResult> GetMaxFillLevel()
         {

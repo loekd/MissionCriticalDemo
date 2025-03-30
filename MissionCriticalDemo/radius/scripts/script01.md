@@ -1,9 +1,10 @@
-cd /Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/radius/scripts
+cd /Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/radius
 clear
 
 rad workspace switch local
+rad group create ateam
 rad deploy ./environments/test.bicep -g ateam
-rad deploy ./app.bicep -g ateam -e test --parameters hostName=localhost --parameters useHttps=true
+rad deploy ./app.bicep -g ateam -e test --parameters hostName=localhost --parameters useHttps=true --parameters containerRegistry=""
 
 #find jaeger service by its jaeger prefix, and forward a port to it:
 kubectl port-forward services/$(kubectl get svc -n test-demo04 -o jsonpath="{range .items[*]}{.metadata.name}{'\n'}{end}" | grep "^jaeger-") 16686:16686 -n test-demo04 &

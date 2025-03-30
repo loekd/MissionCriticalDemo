@@ -29,6 +29,10 @@ namespace MissionCriticalDemo.DispatchApi.Services
         private const string _gasInStoreStateStoreName = "gasinstorestate";
         private const string _outboxStateStoreName = "outboxstate";
         private const string _inboxStateStoreName = "inboxstate";
+        private const string _outboxKeyTrackerKey = "outbox_key_tracker";
+        private const string _inboxKeyTrackerKey = "inbox_key_tracker";
+
+        
 
 
         public async Task<int> GetGasInStore(Guid customerId)
@@ -78,13 +82,24 @@ namespace MissionCriticalDemo.DispatchApi.Services
         {
             //we don't directly call the Plant API, but instead put a message in the outbox
             //this way we can retry if the Plant API is down
-            var message = mappers.ToMessage(request, customerId);
-            string json = JsonSerializer.Serialize(message);
-            var buffer = System.Text.Encoding.UTF8.GetBytes(json);
             
+            // Get current key tracker
+            var keyTracker = await daprClient.GetStateAsync<OutboxKeyTracker>(
+                _outboxStateStoreName, _outboxKeyTrackerKey) ?? new OutboxKeyTracker();
+            string messageKey = request.RequestId.ToGuidString();
+
+            // Add the new key if it doesn't exist
+            if (!keyTracker.MessageKeys.Contains(messageKey))
+            {
+                keyTracker.MessageKeys.Add(messageKey);
+            }
+            
+            var message = mappers.ToMessage(request, customerId);
             var requests = new List<StateTransactionRequest>()
             {
-                new(request.RequestId.ToGuidString(), buffer, StateOperationType.Upsert),
+                new(request.RequestId.ToGuidString(), JsonSerializer.SerializeToUtf8Bytes(message), StateOperationType.Upsert),
+                new(_outboxKeyTrackerKey, JsonSerializer.SerializeToUtf8Bytes(keyTracker), StateOperationType.Upsert)
+
                 //TODO: add additional state changes in same transaction if needed
             };
 
@@ -95,12 +110,25 @@ namespace MissionCriticalDemo.DispatchApi.Services
         public async Task StoreIncomingMessage(Messages.Response response)
         {
             var contract = mappers.ToCustomerContract(response);
+            string messageKey = contract.RequestId.ToGuidString();
+    
+            // Get current key tracker
+            var keyTracker = await daprClient.GetStateAsync<InboxKeyTracker>(
+                _inboxStateStoreName, _inboxKeyTrackerKey) ?? new InboxKeyTracker();
+    
+            // Add the new key if it doesn't exist
+            if (!keyTracker.MessageKeys.Contains(messageKey))
+            {
+                keyTracker.MessageKeys.Add(messageKey);
+            }
+    
+            // Save both in a transaction
             var requests = new List<StateTransactionRequest>()
             {
-                new(contract.RequestId.ToGuidString(), JsonSerializer.SerializeToUtf8Bytes(contract), StateOperationType.Upsert),
+                new(messageKey, JsonSerializer.SerializeToUtf8Bytes(contract), StateOperationType.Upsert),
+                new(_inboxKeyTrackerKey, JsonSerializer.SerializeToUtf8Bytes(keyTracker), StateOperationType.Upsert)
             };
 
-            //save changes in transaction
             await daprClient.ExecuteStateTransactionAsync(_inboxStateStoreName, requests, cancellationToken: CancellationToken.None);
         }
     }

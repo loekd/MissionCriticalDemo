@@ -37,13 +37,15 @@ builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSch
 {
     options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(30);
     var existingOnTokenValidatedHandler = options.Events.OnAuthenticationFailed;
-    options.Events.OnAuthenticationFailed = async context =>
+    options.Events.OnAuthenticationFailed = async ctx =>
     {
-        await existingOnTokenValidatedHandler(context);
+        Console.WriteLine(ctx.Exception.Message);
+        await existingOnTokenValidatedHandler(ctx);
     };
 
-    options.Events.OnTokenValidated = ctx =>
+    options.Events.OnTokenValidated += ctx =>
     {
+        Console.WriteLine("Token validated");
         return Task.CompletedTask;
     };
 });
@@ -66,6 +68,9 @@ builder.Services.AddCors(options =>
                       .AllowCredentials();
     });
 });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 app.UseResponseCompression();
@@ -104,5 +109,8 @@ app.MapControllers();
 
 app.MapHub<DispatchHub>("/dispatchhub");
 app.MapFallbackToFile("index.html");
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.Run();

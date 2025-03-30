@@ -1,43 +1,15 @@
 {
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:41764",
-      "sslPort": 44311
-    }
-  },
   "profiles": {
-    "dapr-self-hosted": {
-      "commandName": "Executable",
-      "executablePath": "dapr",
-      "commandLineArgs": "run -a server -p 8080 -d ..\\components -- dotnet run",
-      "workingDirectory": "$(ProjectDir)",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://localhost:7079;http://localhost:8080",
-      "dotnetRunMessages": true
-    },
     "MissionCriticalDemo.Server": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://localhost:7079;http://localhost:8080",
+      "applicationUrl": "https://localhost:7079;http://localhost:8081",
       "dotnetRunMessages": true
-    },
-    "IIS Express": {
-      "commandName": "IISExpress",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}"
     },
     "Docker": {
       "commandName": "Docker",

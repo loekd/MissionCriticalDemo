@@ -12,6 +12,9 @@ param useHttps string
 @description('The host name of the application.')
 param hostName string
 
+@description('The container registry name (leave empty for local deployments).')
+param containerRegistry string = 'acrradius.azurecr.io'
+
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
   name: 'shared'
@@ -28,6 +31,7 @@ module frontend 'frontend.bicep' = {
     applicationName: applicationName
     useHttps: useHttps
     hostName: hostName
+    containerRegistry: containerRegistry
   }
   dependsOn: [
     shared
@@ -41,7 +45,8 @@ module plantApi 'plant.bicep' = {
   name: 'plant'
   params: {
     environmentName: environmentName
-    applicationName: applicationName    
+    applicationName: applicationName
+    containerRegistry: containerRegistry
   }
   dependsOn: [
     shared
@@ -53,7 +58,8 @@ module dispatchApi 'dispatch.bicep' = {
   name: 'dispatch'
   params: {
     environmentName: environmentName
-    applicationName: applicationName    
+    applicationName: applicationName   
+    containerRegistry: containerRegistry 
   }
   dependsOn: [
     shared

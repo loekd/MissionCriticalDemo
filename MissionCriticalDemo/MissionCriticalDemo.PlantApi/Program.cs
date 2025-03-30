@@ -17,14 +17,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IMappers, Mappers>();
 builder.Services.AddScoped<IGasStorage, GasStorage>();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 //important to leave this out, as Dapr will call the non-https endpoint
 //app.UseHttpsRedirection();

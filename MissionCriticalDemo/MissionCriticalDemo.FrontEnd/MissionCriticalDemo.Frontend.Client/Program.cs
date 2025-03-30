@@ -20,36 +20,19 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        await Task.Delay(2000);
-        
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
-
-        
         builder.Logging.SetMinimumLevel(LogLevel.Debug);
         
         //this approach is not working in WASM!
         // builder.Services.AddOpenTelemetry()
         //     .WithTracing(opt =>
-        //     {
-        //         opt.SetSampler(new AlwaysOnSampler());
-        //         opt.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-wasm"))
-        //             .AddSource(activitySource.Name);
-        //
-        //         opt.AddHttpClientInstrumentation();
-        //         opt.AddZipkinExporter(bld =>
-        //         {
-        //             bld.Endpoint = new Uri("http://localhost:5045/zipkin");
-        //             bld.ExportProcessorType = ExportProcessorType.Simple;
-        //         });
-        //         opt.AddConsoleExporter();
-        //     });
         
         var openTelemetry = Sdk.CreateTracerProviderBuilder()
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("blazor-otel"))
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Frontend (Wasm)"))
             .AddSource("WasmFrontend")
             .AddZipkinExporter(o =>
             {
-                o.Endpoint = new Uri("http://localhost:5054/zipkin");
+                o.Endpoint = new Uri($"{builder.HostEnvironment.BaseAddress}/zipkin");
                 o.ExportProcessorType = ExportProcessorType.Simple;
             })
             .Build();

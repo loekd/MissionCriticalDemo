@@ -1,17 +1,17 @@
-apiVersion: dapr.io/v1alpha1
-kind: Component
-metadata:
-  name: plantstate
-spec:
-  type: state.postgresql
-  version: v1
-  metadata:
-    - name: connectionString
-      value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
-    - name: tableName
-      value: "plantCollection"
-    - name: metadataTableName
-      value: "plantCollectionmetadata"
+#apiVersion: dapr.io/v1alpha1
+#kind: Component
+#metadata:
+#  name: plantstate
+#spec:
+#  type: state.postgresql
+#  version: v1
+#  metadata:
+#    - name: connectionString
+#      value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
+#    - name: tableName
+#      value: "plantCollection"
+#    - name: metadataTableName
+#      value: "plantCollectionmetadata"
 
 # cosmosdb component statestore
 #apiVersion: dapr.io/v1alpha1
@@ -30,3 +30,18 @@ spec:
 #      value: "plant"
 #    - name: collection
 #      value: "plantstate"
+
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: plantstate
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: localhost:6380
+    - name: redisPassword
+      value: ""
+    - name: redisDB
+      value: "3"

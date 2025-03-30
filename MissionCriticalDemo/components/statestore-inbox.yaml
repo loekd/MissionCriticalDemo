@@ -1,14 +1,29 @@
+#apiVersion: dapr.io/v1alpha1
+#kind: Component
+#metadata:
+#  name: inboxstate
+#spec:
+#  type: state.postgresql
+#  version: v1
+#  metadata:
+#  - name: connectionString
+#    value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
+#  - name: tableName
+#    value: "inboxCollection"
+#  - name: metadataTableName
+#    value: "inboxCollectionmetadata" 
+
 apiVersion: dapr.io/v1alpha1
 kind: Component
 metadata:
   name: inboxstate
 spec:
-  type: state.postgresql
+  type: state.redis
   version: v1
   metadata:
-  - name: connectionString
-    value: "host=localhost port=5432 database=dispatch user=sa password=SomePassword sslmode=disable connect_timeout=10"
-  - name: tableName
-    value: "inboxCollection"
-  - name: metadataTableName
-    value: "inboxCollectionmetadata" 
+    - name: redisHost
+      value: localhost:6380
+    - name: redisPassword
+      value: ""
+    - name: redisDB
+      value: "2"

@@ -8,14 +8,19 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 const string daprComponentsPath = "/Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/components";
 //the actual data store:
-var usernameParameter = builder.AddParameter("username", "sa");
-var passwordParameter = builder.AddParameter("password", "SomePassword", secret: true);
-var postgresDb = builder
-    .AddPostgres("postgresdb-dispatch", userName: usernameParameter, password: passwordParameter)
-    .WithEndpoint(name: "main", port: 5432, targetPort: 5432)
-    .WithEnvironment("POSTGRES_HOST_AUTH_METHOD", "trust")
-    .WithLifetime(ContainerLifetime.Persistent)
-    .WithPgAdmin();
+// var usernameParameter = builder.AddParameter("username", "sa");
+// var passwordParameter = builder.AddParameter("password", "SomePassword", secret: true);
+// var postgresDb = builder
+//     .AddPostgres("postgresdb-dispatch", userName: usernameParameter, password: passwordParameter)
+//     .WithEndpoint(name: "main", port: 5432, targetPort: 5432)
+//     .WithEnvironment("POSTGRES_HOST_AUTH_METHOD", "trust")
+//     .WithLifetime(ContainerLifetime.Persistent)
+//     .WithPgAdmin();
+
+// var mongoDb = builder
+//     .AddMongoDB("mongodb-dispatch", 27017, usernameParameter, passwordParameter)
+//     .WithLifetime(ContainerLifetime.Persistent)
+//     .WithMongoExpress();
 
 //the actual pub/sub message broker:
 var redis = builder
@@ -32,17 +37,17 @@ builder.AddDapr();
 var dispatchInboxStateStore = builder.AddDaprStateStore("inboxstate", new DaprComponentOptions
 {
     LocalPath = $"{daprComponentsPath}/statestore-inbox.yaml"
-});
+}).WaitFor(redis);
 
 var dispatchOutboxStateStore = builder.AddDaprStateStore("outboxstate", new DaprComponentOptions
 {
     LocalPath = $"{daprComponentsPath}/statestore.yaml"
-});
+}).WaitFor(redis);
 
 var dispatchGisStateStore = builder.AddDaprStateStore("gasinstorestate", new DaprComponentOptions
 {
     LocalPath = $"{daprComponentsPath}/statestore-gis.yaml"
-});
+}).WaitFor(redis);
 
 var dispatchPubSub = builder.AddDaprPubSub("dispatchpubsub", new DaprComponentOptions
 {
@@ -53,7 +58,7 @@ var dispatchPubSub = builder.AddDaprPubSub("dispatchpubsub", new DaprComponentOp
 var plantStateStore = builder.AddDaprStateStore("plantstate", new DaprComponentOptions
 {
     LocalPath = $"{daprComponentsPath}/statestore-plant.yaml"
-});
+}).WaitFor(redis);
 
 var dispatchApi = builder
     .AddProject<Projects.MissionCriticalDemo_DispatchApi>("DispatchApi")
@@ -81,6 +86,8 @@ var frontend = builder
     .WithExternalHttpEndpoints()
     .WithReference(dispatchApi)
     .WithReference(jaeger.Resource.OtlpEndpoint)
+    .WithEnvironment("OTLP", jaeger.Resource.OtlpEndpoint)
+    .WithEnvironment("ZIPKIN", jaeger.Resource.ZipkinEndpoint)
     .WithReference(jaeger.Resource.ZipkinEndpoint)
     .WaitFor(jaeger);
 

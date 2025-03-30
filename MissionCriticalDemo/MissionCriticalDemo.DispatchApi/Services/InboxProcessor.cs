@@ -1,10 +1,11 @@
-﻿using System.Text.Json;
-using Dapr.Client;
+﻿using Dapr.Client;
 using Microsoft.AspNetCore.SignalR;
 using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.Messages;
-using MissionCriticalDemo.Shared;
 using MissionCriticalDemo.Shared.Contracts;
+using System.Collections.Generic;
+using System.Text.Json;
+using MissionCriticalDemo.Shared;
 
 namespace MissionCriticalDemo.DispatchApi.Services
 {
@@ -13,14 +14,9 @@ namespace MissionCriticalDemo.DispatchApi.Services
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<InboxProcessor> _logger;
         private const string _stateStoreName = "inboxstate";
-        private const string query = "{\"sort\": [{\"key\": \"value.Timestamp\",\"order\": \"DESC\"}]}";
+        private const string _keyTrackerKey = "inbox_key_tracker";
         private readonly CancellationTokenSource _stopTokenSource = new();
 
-        /// <summary>
-        /// Monitors the Inbox and processes messages if they are there.
-        /// </summary>
-        /// <param name="serviceProvider"></param>
-        /// <exception cref="ArgumentNullException"></exception>
         public InboxProcessor(IServiceScopeFactory serviceScopeFactory, ILogger<InboxProcessor> logger)
         {
             _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
@@ -29,7 +25,6 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            //return;
             await Task.Delay(10_000, cancellationToken);
 
             _logger.LogTrace("Running Inbox processor");
@@ -60,17 +55,14 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
         private async Task ProcessInboxItems(DaprClient daprClient, CancellationToken stopToken)
         {
-            var response = await FetchInboxItems(daprClient, stopToken);
+            var results = await FetchInboxItems(daprClient, stopToken);
 
-            if (response != null)
+            if (results.Count > 0)
             {
-                foreach (var result in response.Results)
+                foreach (var customerRequest in results)
                 {
-                    var decoded = Convert.FromBase64String(result.Data);
-                    string json = System.Text.Encoding.UTF8.GetString(decoded, 0, decoded.Length);
-                    var customerRequest = JsonSerializer.Deserialize<CustomerRequest>(json)!;
-                    
-                    _logger.LogTrace("Processing customer change {RequestId} from customer {CustomerId}!", customerRequest.RequestId, customerRequest.CustomerId);
+                    _logger.LogTrace("Processing customer change {RequestId} from customer {CustomerId}!", 
+                        customerRequest.RequestId, customerRequest.CustomerId);
                     await ProcessCustomerRequest(customerRequest, stopToken);
                     await DeleteInboxMessage(daprClient, customerRequest, stopToken);
                 }
@@ -83,19 +75,80 @@ namespace MissionCriticalDemo.DispatchApi.Services
             return Task.CompletedTask;
         }
 
-        private static Task<StateQueryResponse<string>> FetchInboxItems(DaprClient daprClient, CancellationToken cancellationToken)
+        private async Task<List<CustomerRequest>> FetchInboxItems(DaprClient daprClient, CancellationToken cancellationToken)
         {
-            return daprClient.QueryStateAsync<string>(_stateStoreName, query, cancellationToken: cancellationToken);
+            // Get the key tracker
+            var keyTracker = await GetKeyTracker(daprClient, cancellationToken);
+            
+            if (keyTracker.MessageKeys.Count == 0)
+                return [];
+
+            var results = new List<CustomerRequest>();
+            
+            // Fetch each message by key
+            foreach (string key in keyTracker.MessageKeys)
+            {
+                try
+                {
+                    var customerRequest = await daprClient.GetStateAsync<CustomerRequest>(
+                        _stateStoreName, key, cancellationToken: cancellationToken);
+                    
+                    if (customerRequest != null)
+                    {
+                        results.Add(customerRequest);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error retrieving message with key {Key}", key);
+                }
+            }
+            
+            // Sort results by timestamp descending if needed
+            return results.OrderByDescending(r => r.Timestamp).ToList();
         }
 
-        private static async Task DeleteInboxMessage(DaprClient daprClient, CustomerRequest customerRequest, CancellationToken cancellationToken)
+        private async Task<InboxKeyTracker> GetKeyTracker(DaprClient daprClient, CancellationToken cancellationToken)
         {
-            //Should not delete the inbox message, but mark it as processed, so we can detect duplicate messages.
-            //This is a simple example, so we delete it.
-            await daprClient.DeleteStateAsync(_stateStoreName, customerRequest.RequestId.ToGuidString(), cancellationToken: cancellationToken);
+            try
+            {
+                var tracker = await daprClient.GetStateAsync<InboxKeyTracker>(
+                    _stateStoreName, _keyTrackerKey, cancellationToken: cancellationToken);
+                
+                return tracker ?? new InboxKeyTracker();
+            }
+            catch 
+            {
+                return new InboxKeyTracker();
+            }
         }
 
-        private async Task ProcessCustomerRequest(CustomerRequest? customerRequest, CancellationToken cancellationToken)
+        private async Task DeleteInboxMessage(DaprClient daprClient, CustomerRequest customerRequest, 
+            CancellationToken cancellationToken)
+        {
+            // First remove key from tracker
+            var keyTracker = await GetKeyTracker(daprClient, cancellationToken);
+            keyTracker.MessageKeys.Remove(customerRequest.RequestId.ToGuidString());
+            
+            // Update tracker and delete message in a transaction
+            var requests = new List<StateTransactionRequest>
+            {
+                new(
+                    _keyTrackerKey, 
+                    JsonSerializer.SerializeToUtf8Bytes(keyTracker), 
+                    StateOperationType.Upsert
+                ),
+                new(
+                    customerRequest.RequestId.ToGuidString(),
+                    null,
+                    StateOperationType.Delete
+                )
+            };
+            
+            await daprClient.ExecuteStateTransactionAsync(_stateStoreName, requests, cancellationToken: cancellationToken);
+        }
+
+        private async Task ProcessCustomerRequest(CustomerRequest customerRequest, CancellationToken cancellationToken)
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var gasStorage = scope.ServiceProvider.GetRequiredService<IGasStorage>();
@@ -103,7 +156,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
             var dispatchHub = scope.ServiceProvider.GetRequiredService<IHubContext<DispatchHub>>();
 
             //process response
-            if (customerRequest != null)
+            if (customerRequest.Success)
             {
                 int delta = customerRequest.Direction == Shared.Enums.FlowDirection.Inject ? customerRequest.AmountInGWh : 0 - customerRequest.AmountInGWh;
                 int currentAmount = await gasStorage.GetGasInStore(customerRequest.CustomerId);
@@ -134,5 +187,11 @@ namespace MissionCriticalDemo.DispatchApi.Services
                 _logger.LogWarning("Processing Failed - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.RequestId, customerRequest.CustomerId, currentAmount);
             }
         }
+    }
+
+    // Class to track inbox message keys
+    public class InboxKeyTracker
+    {
+        public List<string> MessageKeys { get; set; } = [];
     }
 }

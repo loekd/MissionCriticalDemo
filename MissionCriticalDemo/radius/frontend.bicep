@@ -38,6 +38,9 @@ var volumeName = 'scripts'
 @description('The name of the frontend container.')
 var frontendContainerName = 'frontend'
 
+var certPrivateKey = contains(environmentName, 'prod') ? loadTextContent('./certificates/privkey.pem') : loadTextContent('./certificates/localhost.key')
+var certPublicKey = contains(environmentName, 'prod') ? loadTextContent('./certificates/fullchain.pem') : loadTextContent('./certificates/localhost.crt')
+
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
   name: 'shared'
@@ -47,30 +50,30 @@ module shared 'shared.bicep' = {
   }
 }
 
-// Create a ConfigMap with the frontend appsettings.json. This is mounted to the frontend container.
-// It points to the public endpoint of the Dispatch API.
-// This is currently leaking K8s details into the Radius file.
-resource configMap 'core/ConfigMap@v1' = {
-  metadata: {
-    name: 'frontend-scripts'
-    namespace: kubernetesNamespace
-  }
-  data: {
-    #disable-next-line prefer-interpolation
-    'appsettings.json': concat('''
-    {
-      "AzureAdB2C": {
-        "Authority": "https://loekdb2c.b2clogin.com/loekdb2c.onmicrosoft.com/B2C_1_UserFlowSuSi",
-        "ClientId": "81c2fe74-bc14-4c65-b209-52f042cd3263",
-        "ValidateAuthority": false
-      },
-      "DispatchApi": {
-        "Endpoint": "''', dispatchApiHostAndPort, '''"
-      }
-    }
-    ''')
-  }
-}
+// // Create a ConfigMap with the frontend appsettings.json. This is mounted to the frontend container.
+// // It points to the public endpoint of the Dispatch API.
+// // This is currently leaking K8s details into the Radius file.
+// resource configMap 'core/ConfigMap@v1' = {
+//   metadata: {
+//     name: 'frontend-scripts'
+//     namespace: kubernetesNamespace
+//   }
+//   data: {
+//     #disable-next-line prefer-interpolation
+//     'appsettings.json': concat('''
+//     {
+//       "AzureAdB2C": {
+//         "Authority": "https://loekdb2c.b2clogin.com/loekdb2c.onmicrosoft.com/B2C_1_UserFlowSuSi",
+//         "ClientId": "81c2fe74-bc14-4c65-b209-52f042cd3263",
+//         "ValidateAuthority": false
+//       },
+//       "DispatchApi": {
+//         "Endpoint": "''', dispatchApiHostAndPort, '''"
+//       }
+//     }
+//     ''')
+//   }
+// }
 
 
 // Blazor WASM Frontend on Nginx
@@ -80,7 +83,7 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
     container: {
-      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:latest' : '${containerRegistry}/missioncriticaldemo.frontend:latest'
+      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:2.0.0' : '${containerRegistry}/missioncriticaldemo.frontend:latest'
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'Always'
       ports: {
         web: {
@@ -88,33 +91,42 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
           protocol: 'TCP'
         }
       }
-    }
-    runtimes: {
-      kubernetes: {
-        pod: {
-          containers: [
-            {
-              name: frontendContainerName
-              volumeMounts: [
-                {
-                  name: volumeName
-                  mountPath: '/usr/share/nginx/html/appsettings.json'
-                  subPath: 'appsettings.json'
-                }
-              ]
-            }
-          ]
-          volumes: [
-            {
-              name: volumeName
-              configMap: {
-                name: configMap.metadata.name
-              }
-            }
-          ]
+      env: {
+        // ASP.NET Core configuration to bind to port 80 (nginx default)
+        ASPNETCORE_URLS: { 
+          value: 'http://+${frontendPort}' 
+        }
+        AzureAdB2C__ClientSecret: {
+          value: loadTextContent('./secrets/clientsecret.txt')
         }
       }
     }
+    // runtimes: {
+    //   kubernetes: {
+    //     pod: {
+    //       containers: [
+    //         {
+    //           name: frontendContainerName
+    //           volumeMounts: [
+    //             {
+    //               name: volumeName
+    //               mountPath: '/usr/share/nginx/html/appsettings.json'
+    //               subPath: 'appsettings.json'
+    //             }
+    //           ]
+    //         }
+    //       ]
+    //       volumes: [
+    //         {
+    //           name: volumeName
+    //           configMap: {
+    //             name: configMap.metadata.name
+    //           }
+    //         }
+    //       ]
+    //     }
+    //   }
+    // }
   }
 }
 
@@ -130,9 +142,9 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
   properties: {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
-    hostname: {
-      fullyQualifiedHostname: hostName
-    }
+    // hostname: {
+    //   fullyQualifiedHostname: hostName
+    // }
     tls: {
       sslPassthrough: false
       certificateFrom: appCert.id
@@ -165,10 +177,13 @@ resource appCert 'Applications.Core/secretStores@2023-10-01-preview' = {
     type: 'certificate'
     data: {
       'tls.key': {
-        value: loadTextContent('./certificates/privkey.pem')
+        value: certPrivateKey
       }
       'tls.crt': {
-        value: loadTextContent('./certificates/fullchain.pem')
+        value: certPublicKey
+      }
+      'clientsecret.txt': {
+        value: loadTextContent('./secrets/clientsecret.txt') 
       }
     }
   }
