@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Aspire\MissionCriticalDemo.ServiceDefaults\MissionCriticalDemo.ServiceDefaults.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" />
   </ItemGroup>

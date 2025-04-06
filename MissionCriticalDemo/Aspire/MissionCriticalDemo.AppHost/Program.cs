@@ -1,28 +1,13 @@
-using System.Diagnostics;
 using CommunityToolkit.Aspire.Hosting.Dapr;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MissionCriticalDemo.AppHost.OpenTelemetry;
+using MissionCriticalDemo.Shared;
+// ReSharper disable UnusedVariable
 
 var builder = DistributedApplication.CreateBuilder(args);
 
 const string daprComponentsPath = "/Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/components";
-//the actual data store:
-// var usernameParameter = builder.AddParameter("username", "sa");
-// var passwordParameter = builder.AddParameter("password", "SomePassword", secret: true);
-// var postgresDb = builder
-//     .AddPostgres("postgresdb-dispatch", userName: usernameParameter, password: passwordParameter)
-//     .WithEndpoint(name: "main", port: 5432, targetPort: 5432)
-//     .WithEnvironment("POSTGRES_HOST_AUTH_METHOD", "trust")
-//     .WithLifetime(ContainerLifetime.Persistent)
-//     .WithPgAdmin();
 
-// var mongoDb = builder
-//     .AddMongoDB("mongodb-dispatch", 27017, usernameParameter, passwordParameter)
-//     .WithLifetime(ContainerLifetime.Persistent)
-//     .WithMongoExpress();
-
-//the actual pub/sub message broker:
+//A containerized pub/sub message broker & state store:
 var redis = builder
     .AddRedis("redis")
     .WithEndpoint(name:"redis-master", port: 6380, targetPort: 6379)
@@ -52,8 +37,7 @@ var dispatchGisStateStore = builder.AddDaprStateStore("gasinstorestate", new Dap
 var dispatchPubSub = builder.AddDaprPubSub("dispatchpubsub", new DaprComponentOptions
 {
     LocalPath = $"{daprComponentsPath}/pubsub.yaml"
-})
-    .WaitFor(redis);
+}).WaitFor(redis);
 
 var plantStateStore = builder.AddDaprStateStore("plantstate", new DaprComponentOptions
 {
@@ -66,9 +50,8 @@ var dispatchApi = builder
     .WithReference(dispatchInboxStateStore)
     .WithReference(dispatchOutboxStateStore)
     .WithReference(dispatchGisStateStore)
-    //.WithReference(postgresDb)
     .WithReference(dispatchPubSub)
-    //.WithReference(redis)
+    .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WithExternalHttpEndpoints()
     .WaitFor(jaeger);
 
@@ -76,21 +59,18 @@ var plantApi = builder
     .AddProject<Projects.MissionCriticalDemo_PlantApi>("PlantApi")
     .WithDaprSidecar()
     .WithReference(plantStateStore)
-    //.WithReference(postgresDb)
     .WithReference(dispatchPubSub)
-    //.WithReference(redis);
+    .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WaitFor(jaeger);
 
 var frontend = builder
     .AddProject<Projects.MissionCriticalDemo_Frontend>("Frontend")
     .WithExternalHttpEndpoints()
     .WithReference(dispatchApi)
-    .WithReference(jaeger.Resource.OtlpEndpoint)
-    .WithEnvironment("OTLP", jaeger.Resource.OtlpEndpoint)
-    .WithEnvironment("ZIPKIN", jaeger.Resource.ZipkinEndpoint)
-    .WithReference(jaeger.Resource.ZipkinEndpoint)
-    .WaitFor(jaeger);
-
+    .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
+    .WithEnvironment(Constants.ZipkinEndpoint, jaeger.Resource.ZipkinEndpoint)
+    .WaitFor(jaeger)
+    .WaitFor(dispatchApi);
 
 builder.Build().Run();
 

@@ -12,20 +12,15 @@ using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using MissionCriticalDemo.Frontend.Client.Pages;
 using MissionCriticalDemo.Frontend.Components;
-using MissionCriticalDemo.Shared.Resilience;
 using MissionCriticalDemo.Shared.Services;
 using MudBlazor.Services;
-using OpenTelemetry;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Trace;
 using Yarp.ReverseProxy.Transforms;
+using Constants = MissionCriticalDemo.Shared.Constants;
 
 namespace MissionCriticalDemo.Frontend;
 
-public class Program
+public static class Program
 {
     public static void Main(string[] args)
     {
@@ -51,9 +46,7 @@ public class Program
             .AddMicrosoftIdentityWebApp(options =>
             {
                 builder.Configuration.Bind("AzureAdB2C", options);
-
-                //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-
+         
                 options.ResponseType = "code";
                 options.UsePkce = true;
                 options.SaveTokens = true;
@@ -129,13 +122,13 @@ public class Program
             // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
-
-        //app.UseHttpsRedirection();
-        // app.UseBlazorFrameworkFiles();
-        // app.UseStaticFiles();
-        // app.UseRouting(); 
-        app.UseAntiforgery();
-        app.MapHealthChecks("/api/healthz");
+  
+        // Only use antiforgery for endpoints that are not under /zipkin
+        app.UseWhen(context => !context.Request.Path.StartsWithSegments("/zipkin"), appBuilder =>
+        {
+            appBuilder.UseAntiforgery();
+        });
+        app.MapHealthChecks("/healthz");
 
         app.UseAuthentication();
         app.UseAuthorization();
@@ -149,15 +142,16 @@ public class Program
             .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
 
         app.MapForwarder("/api/{**catch-all}", "http://dispatchapi", transformBuilder => {
-                //transformBuilder.AddPathSet("/api/{**catch-all}");
-            transformBuilder.AddRequestTransform(async transformContext =>
-            {
-                var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
-                Console.WriteLine($"Using access token: {accessToken?[..8] ?? "empty"}");
-                transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
-            });
-        });
-            //.RequireAuthorization();
+                transformBuilder.AddRequestTransform(async transformContext =>
+                {
+                    var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
+                    Console.WriteLine($"Using access token: {accessToken?[..8] ?? "empty"}");
+                    transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
+                });
+        })
+            .DisableAntiforgery()
+            .RequireAuthorization();
+        
         app.MapForwarder("/dispatchhub/{**catch-all}", "http://dispatchapi", "/dispatchhub/{**catch-all}");
        
         string? otlpConfig = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
@@ -166,15 +160,13 @@ public class Program
             app.MapForwarder("/v1/traces/{**catch-all}", otlpConfig, "/v1/traces/{**catch-all}");
         }
         
-        string? zipkinConfig = builder.Configuration["ZIPKIN"] ?? builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
+        string? zipkinConfig = builder.Configuration[Constants.ZipkinEndpoint] ?? builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
         if (zipkinConfig is not null)
         {
-            app.MapForwarder("/zipkin/{**catch-all}", zipkinConfig, "/api/v2/spans/{**catch-all}");
+            app.MapForwarder("/zipkin/{**catch-all}", zipkinConfig, "/api/v2/spans/{**catch-all}")
+                .DisableAntiforgery();
         }
-        
-        
         app.MapGroup("/authentication").MapLoginAndLogout();
-
         app.Run();
     }
 
@@ -183,27 +175,6 @@ public class Program
 
 internal static class Extensions
 {
-    // internal static WebApplicationBuilder ConfigureTelemetry(this WebApplicationBuilder builder)
-    // {
-    //     // builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => 
-    //     //     tracing.AddAspNetCoreInstrumentation()
-    //     // );
-    //     // builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => 
-    //     //     metrics.AddAspNetCoreInstrumentation()
-    //     // );
-    //
-    //     builder.Services.AddOpenTelemetry()
-    //         .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri("http://jaeger"));
-    //         // .WithMetrics(metrics => 
-    //         //     metrics.AddAspNetCoreInstrumentation()
-    //         // )
-    //         // .WithTracing(tracing => 
-    //         //     tracing.AddAspNetCoreInstrumentation()
-    //         // );
-    //     
-    //     return builder;
-    // }
-    
     internal static IEndpointConventionBuilder MapLoginAndLogout(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("");

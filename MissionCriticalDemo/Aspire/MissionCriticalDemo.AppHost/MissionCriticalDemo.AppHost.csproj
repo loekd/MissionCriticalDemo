@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\MissionCriticalDemo.DispatchApi\MissionCriticalDemo.DispatchApi.csproj" />    
     <ProjectReference Include="..\..\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend.csproj" />
     <ProjectReference Include="..\..\MissionCriticalDemo.PlantApi\MissionCriticalDemo.PlantApi.csproj" />
+    <ProjectReference Include="..\..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>

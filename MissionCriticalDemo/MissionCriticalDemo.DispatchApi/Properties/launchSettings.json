@@ -8,7 +8,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "inspectUri": "{wsProtocol}://{url.hostname}:{url.port}/_framework/debug/ws-proxy?browser={browserInspectUri}",
-      "applicationUrl": "https://localhost:7079;http://localhost:8081",
+      "applicationUrl": "https://localhost:7079;http://localhost:8088",
       "dotnetRunMessages": true
     },
     "Docker": {

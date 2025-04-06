@@ -73,7 +73,7 @@ public static class Extensions
 
     private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        string? config = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
+        string? config = builder.Configuration[MissionCriticalDemo.Shared.Constants.OtlpEndpoint] ?? builder.Configuration["services:Jaeger:otlpEndpoint:0"];
         var useCustomOtlpExporter = !string.IsNullOrWhiteSpace(config);
 
         if (useCustomOtlpExporter)

@@ -32,7 +32,7 @@ class Program
             .AddSource("WasmFrontend")
             .AddZipkinExporter(o =>
             {
-                o.Endpoint = new Uri($"{builder.HostEnvironment.BaseAddress}/zipkin");
+                o.Endpoint = new Uri($"{builder.HostEnvironment.BaseAddress}zipkin");
                 o.ExportProcessorType = ExportProcessorType.Simple;
             })
             .Build();

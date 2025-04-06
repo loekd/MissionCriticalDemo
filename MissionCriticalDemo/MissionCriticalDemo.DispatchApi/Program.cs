@@ -11,6 +11,8 @@ using MissionCriticalDemo.DispatchApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAdB2C"));
@@ -57,17 +59,17 @@ builder.Services.AddHostedService<OutboxProcessor>();
 builder.Services.AddHostedService<InboxProcessor>();
 
 //CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(builder =>
-    {
-        //allow the frontend with tokens
-        builder.AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .SetIsOriginAllowed((host) => true)
-                      .AllowCredentials();
-    });
-});
+// builder.Services.AddCors(options =>
+// {
+//     options.AddDefaultPolicy(builder =>
+//     {
+//         //allow the frontend with tokens
+//         builder.AllowAnyHeader()
+//                       .AllowAnyMethod()
+//                       .SetIsOriginAllowed((host) => true)
+//                       .AllowCredentials();
+//     });
+// });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
