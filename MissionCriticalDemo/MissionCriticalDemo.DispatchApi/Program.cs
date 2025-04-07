@@ -8,10 +8,14 @@ using MissionCriticalDemo.Messages;
 using MissionCriticalDemo.DispatchApi.InputValidation;
 using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.DispatchApi.Services;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddServiceDefaults();
+builder.AddServiceDefaults("DispatchApi");
+
+// Register ActivitySource before other services that depend on it
+builder.Services.AddSingleton(new ActivitySource("DispatchApi"));
 
 // Add services to the container.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -105,10 +109,8 @@ app.UseAuthorization();
 app.UseCloudEvents();
 
 app.MapRazorPages();
-
 app.MapSubscribeHandler();
 app.MapControllers();
-
 app.MapHub<DispatchHub>("/dispatchhub");
 app.MapFallbackToFile("index.html");
 

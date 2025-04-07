@@ -33,7 +33,7 @@ public static class Program
             options.AllowedHosts.Add("*");
         });
 
-        builder.AddServiceDefaults(); //adds service discovery, resilience, health checks, and OpenTelemetry
+        builder.AddServiceDefaults("Frontend"); //adds service discovery, resilience, health checks, and OpenTelemetry
 
         //Add health endpoint support
         builder.Services.AddHealthChecks();

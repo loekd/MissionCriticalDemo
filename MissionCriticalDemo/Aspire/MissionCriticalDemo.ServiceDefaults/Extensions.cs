@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,9 +17,9 @@ namespace Microsoft.Extensions.Hosting;
 // To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
 public static class Extensions
 {
-    public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder AddServiceDefaults<TBuilder>(this TBuilder builder, string serviceName) where TBuilder : IHostApplicationBuilder
     {
-        builder.ConfigureOpenTelemetry();
+        builder.ConfigureOpenTelemetry(serviceName);
 
         builder.AddDefaultHealthChecks();
 
@@ -42,7 +43,7 @@ public static class Extensions
         return builder;
     }
 
-    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder ConfigureOpenTelemetry<TBuilder>(this TBuilder builder, string serviceName) where TBuilder : IHostApplicationBuilder
     {
         builder.Logging.AddOpenTelemetry(logging =>
         {
@@ -66,12 +67,12 @@ public static class Extensions
                     .AddHttpClientInstrumentation();
             });
 
-        builder.AddOpenTelemetryExporters();
+        builder.AddOpenTelemetryExporters(serviceName);
 
         return builder;
     }
 
-    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    private static TBuilder AddOpenTelemetryExporters<TBuilder>(this TBuilder builder, string serviceName) where TBuilder : IHostApplicationBuilder
     {
         string? config = builder.Configuration[MissionCriticalDemo.Shared.Constants.OtlpEndpoint] ?? builder.Configuration["services:Jaeger:otlpEndpoint:0"];
         var useCustomOtlpExporter = !string.IsNullOrWhiteSpace(config);
@@ -91,6 +92,9 @@ public static class Extensions
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
+
+        var activitySource = new ActivitySource(serviceName);
+        builder.Services.AddSingleton(activitySource);
 
         // Uncomment the following lines to enable the Azure Monitor exporter (requires the Azure.Monitor.OpenTelemetry.AspNetCore package)
         //if (!string.IsNullOrEmpty(builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]))
