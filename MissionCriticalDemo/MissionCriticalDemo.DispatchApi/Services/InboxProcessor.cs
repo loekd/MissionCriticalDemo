@@ -184,7 +184,7 @@ namespace MissionCriticalDemo.DispatchApi.Services
             using var scope = _serviceScopeFactory.CreateScope();
             var gasStorage = scope.ServiceProvider.GetRequiredService<IGasStorage>();
             var mappers = scope.ServiceProvider.GetRequiredService<IMappers>();
-            var dispatchHub = scope.ServiceProvider.GetRequiredService<IHubContext<DispatchHub>>();
+            var dispatchHub = scope.ServiceProvider.GetRequiredService<IHubContext<DispatchHub, IDispatchHub>>();
 
             //process response
             if (customerRequest.Success)
@@ -200,22 +200,30 @@ namespace MissionCriticalDemo.DispatchApi.Services
                 await gasStorage.CacheFillLevel(customerRequest.CurrentFillLevel);
                 await gasStorage.CacheMaxFillLevel(customerRequest.MaxFillLevel);
 
-                //notify front-end
-                await dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson(), cancellationToken);
+                //notify front-end with trace context
+                await dispatchHub.Clients.All.SendFlowResponse(
+                    customerRequest.CustomerId.ToString(), 
+                    contract,
+                    Activity.Current != null ? ActivityContextDTO.FromActivityContext(Activity.Current.Context) : null);
 
                 //log warning so it shows up:
-                _logger.LogWarning("Processed OK - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.RequestId, customerRequest.CustomerId, newAmount);
+                _logger.LogWarning("Processed OK - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", 
+                    customerRequest.RequestId, customerRequest.CustomerId, newAmount);
             }
             else
             {
                 int currentAmount = await gasStorage.GetGasInStore(customerRequest.CustomerId);
                 var contract = mappers.ToContract(customerRequest, currentAmount, false);
 
-                //notify front-end
-                await dispatchHub.Clients.All.SendAsync("ReceiveMessage", contract.ToJson(), cancellationToken);
+                //notify front-end with trace context
+                await dispatchHub.Clients.All.SendFlowResponse(
+                    customerRequest.CustomerId.ToString(), 
+                    contract,
+                    Activity.Current != null ? ActivityContextDTO.FromActivityContext(Activity.Current.Context) : null);
 
                 //log warning so it shows up:
-                _logger.LogWarning("Processing Failed - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", customerRequest.RequestId, customerRequest.CustomerId, currentAmount);
+                _logger.LogWarning("Processing Failed - CustomerRequest id {customerRequestId} for customer {CustomerId}. Customer GIS: {GIS}", 
+                    customerRequest.RequestId, customerRequest.CustomerId, currentAmount);
             }
         }
 

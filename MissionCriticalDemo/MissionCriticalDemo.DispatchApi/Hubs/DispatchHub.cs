@@ -1,21 +1,47 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using MissionCriticalDemo.Shared.Contracts;
+using System.Diagnostics;
 
 namespace MissionCriticalDemo.DispatchApi.Hubs;
 
 public interface IDispatchHub
 {
-    Task SendFlowResponse(string user, Response response);
+    Task SendFlowResponse(string user, Response response, ActivityContextDTO? activityContext = null);
 }
 
-public class DispatchHub : Hub, IDispatchHub
+public class DispatchHub : Hub<IDispatchHub>
 {
-    public async Task SendFlowResponse(string user, Response response)
+    private readonly ActivitySource _activitySource;
+    private readonly ILogger<DispatchHub> _logger;
+
+    public DispatchHub(ActivitySource activitySource, ILogger<DispatchHub> logger)
     {
-        await Clients.User(user).SendAsync("ReceiveMessage", response.ToJson());
+        _activitySource = activitySource;
+        _logger = logger;
+    }
+
+    public async Task SendFlowResponse(string user, Response response, ActivityContextDTO? activityContext = null)
+    {
+        using var activity = _activitySource.StartActivity(
+            "SendFlowResponse", 
+            ActivityKind.Producer, 
+            activityContext?.ToActivityContext() ?? default);
+
+        activity?.SetTag("responseId", response.ResponseId);
+        activity?.SetTag("requestId", response.RequestId);
+        activity?.SetTag("amount", response.TotalAmountInGWh);
+        activity?.SetTag("success", response.Success);
+
+        _logger.LogInformation("Sending flow response to user {User} with response ID {ResponseId}", 
+            user, response.ResponseId);
+
+        // Send the message with serializable context
+        await Clients.All.SendFlowResponse(
+            user, 
+            response, 
+            activity != null ? ActivityContextDTO.FromActivityContext(activity.Context) : null);
     }
 }
-
 
 public static class Extensions
 {

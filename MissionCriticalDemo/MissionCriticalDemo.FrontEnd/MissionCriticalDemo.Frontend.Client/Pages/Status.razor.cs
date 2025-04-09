@@ -51,6 +51,9 @@ public partial class StatusModel : ComponentBase
     [Inject]
     public IConfiguration? Configuration { get; set; }
 
+    [Inject]
+    public ActivitySource? ActivitySource { get; set; }
+
     public bool ButtonsDisabled { get; set; } = false;
 
     /// <summary>
@@ -106,30 +109,46 @@ public partial class StatusModel : ComponentBase
             .WithUrl(hubUrl)
             .Build();
 
-        _hubConnection.On<string>("ReceiveMessage", async message =>
+        _hubConnection.On<string, Response, ActivityContextDTO?>("SendFlowResponse", async (user, response, activityContext) =>
         {
             await InvokeAsync(() =>
             {
-                Console.WriteLine("Received message: {0}", message);
+                Console.WriteLine($"Received flow response for user {user}. Context traceid: {activityContext?.TraceId ?? "empty"}");
 
-                var response =
-                    JsonSerializer.Deserialize<Response>(message,
-                        new JsonSerializerOptions(JsonSerializerDefaults.Web));
-                if (response == null) return;
+                // Create an activity with the received trace context
+                Activity? activity = null;
+                try
+                {                    
+                
+                if (activityContext != null)
+                {
+                    activity = ActivitySource!.StartActivity(
+                        "ReceiveFlowResponse", 
+                        ActivityKind.Consumer,
+                        activityContext.ToActivityContext());
+                }
+
+                activity?.SetTag("responseId", response.ResponseId);                
+                activity?.SetTag("requestId", response.RequestId);
+                activity?.SetTag("success", response.Success);
 
                 if (response.Success)
                 {
                     //update total gas in store
                     CustomerGasInStore = response.TotalAmountInGWh;
                     OverallGasInStore = response.CurrentFillLevel;
-                    Logger!.LogWarning("Received a flow response message id {ResponseId}.", response!.ResponseId);
+                    Logger!.LogWarning("Received a flow response message id {ResponseId}.", response.ResponseId);
                     Snackbar!.Add($"Request was processed. Success: {response.Success}", Severity.Info);
                 }
                 else
                 {
                     Snackbar!.Add($"Request processing failed", Severity.Error);
                 }
-
+}
+                finally
+                {
+                    activity?.Dispose();   
+                }
                 StateHasChanged();
             });
         });
@@ -218,5 +237,11 @@ public partial class StatusModel : ComponentBase
             Snackbar!.Add($"Fetch overall gas in store failed: {ex.Message}", Severity.Warning);
             Logger!.LogError("Failed to fetch status. Error: {ErrorMessage}", ex.Message);
         }
+    }
+
+    private class SignalRMessageWrapper
+    {
+        public string Payload { get; set; } = "";
+        public Dictionary<string, string>? TraceContext { get; set; }
     }
 }
