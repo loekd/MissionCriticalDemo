@@ -29,7 +29,7 @@ resource testEnv 'Applications.Core/environments@2023-10-01-preview' = {
       'Applications.Core/extenders': {
         jaegerRecipe: {
           templateKind: 'bicep'
-          templatePath: 'acrradius.azurecr.io/recipes/jaeger:0.1.0'
+          templatePath: 'acrradius.azurecr.io/recipes/jaeger:0.1.1'
         }
       }    
     }

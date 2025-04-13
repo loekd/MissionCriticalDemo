@@ -11,13 +11,26 @@ var host = '${svc.metadata.name}.${svc.metadata.namespace}.svc.cluster.local'
 var uniqueName = 'jaeger-${uniqueString(context.resource.id)}'
 
 var zipkinPort = 9411
+var otlpPort = 4318
 var webPort = 16686
 var grpcPort = 14250
 
 var env = [
   {
     name: 'COLLECTOR_ZIPKIN_HOST_PORT'
-    value: ':9411'
+    value: ':${zipkinPort}'
+  }
+  {
+    name: 'COLLECTOR_OTLP_HTTP_HOST_PORT'
+    value: ':${otlpPort}'
+  }
+  {
+    name: 'COLLECTOR_OTLP_ENABLED'
+    value: 'true'
+  }
+  {
+    name: 'COLLECTOR_OTLP_HTTP_ENABLED'
+    value: 'true'
   }
   {
     name: 'COLLECTOR_ZIPKIN_ALLOWED_ORIGINS'
@@ -32,7 +45,7 @@ var env = [
 var readinessProbe = {
   httpGet: {
     path: 'http://localhost'
-    port: 16686
+    port: webPort
   }
   initialDelaySeconds: 5
   periodSeconds: 10
@@ -77,6 +90,9 @@ resource jaeger 'apps/Deployment@v1' = {
               }
               {
                 containerPort: grpcPort
+              }  
+              {
+                containerPort: otlpPort
               }              
             ]
             env: env
@@ -112,6 +128,10 @@ resource svc 'core/Service@v1' = {
         port: zipkinPort
       }
       {
+        name: 'otlp'
+        port: otlpPort
+      }
+      {
         name: 'grpc'
         port: grpcPort
       }
@@ -133,6 +153,7 @@ output result object = {
     zipkinPort: zipkinPort
     grpcPort: grpcPort
     zipkinEndpoint: 'http://${host}:${zipkinPort}/api/v2/spans'
+    otlpEndpoint: 'http://${host}:${otlpPort}/v1/traces'
   }
   secrets: {
     //none needed

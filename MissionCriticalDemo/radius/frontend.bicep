@@ -99,6 +99,11 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
         AzureAdB2C__ClientSecret: {
           value: loadTextContent('./secrets/clientsecret.txt')
         }
+      }      
+    }
+    connections: {
+      zipkin: {
+        source: shared.outputs.jaeger.id
       }
     }
     // runtimes: {
@@ -142,9 +147,9 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
   properties: {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
-    // hostname: {
-    //   fullyQualifiedHostname: hostName
-    // }
+    hostname: {
+      fullyQualifiedHostname: hostName
+    }
     tls: {
       sslPassthrough: false
       certificateFrom: appCert.id

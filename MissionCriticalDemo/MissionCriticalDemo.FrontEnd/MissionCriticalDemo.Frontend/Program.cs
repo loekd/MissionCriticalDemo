@@ -154,16 +154,21 @@ public static class Program
         
         app.MapForwarder("/dispatchhub/{**catch-all}", "http://dispatchapi", "/dispatchhub/{**catch-all}");
        
-        string? otlpConfig = builder.Configuration["services:Jaeger:otlpEndpoint:0"];
+        string? otlpConfig = builder.Configuration[Constants.OtlpEndpoint]  //aspire custom env var && radius connection variable name 
+            ?? builder.Configuration["services:Jaeger:otlpEndpoint:0"]; //aspire default reference   
+            
         if (otlpConfig is not null)
         {
-            app.MapForwarder("/v1/traces/{**catch-all}", otlpConfig, "/v1/traces/{**catch-all}");
+            var url = new Uri(otlpConfig);
+            app.MapForwarder("/v1/traces/{**catch-all}", $"http://{url.Host}:{url.Port}", "/v1/traces/{**catch-all}");
         }
         
-        string? zipkinConfig = builder.Configuration[Constants.ZipkinEndpoint] ?? builder.Configuration["services:Jaeger:zipkinEndpoint:0"];
+        string? zipkinConfig = builder.Configuration[Constants.ZipkinEndpoint]  //aspire custom env var && radius connection variable name
+            ?? builder.Configuration["services:Jaeger:zipkinEndpoint:0"]; //aspire default reference            
         if (zipkinConfig is not null)
         {
-            app.MapForwarder("/zipkin/{**catch-all}", zipkinConfig, "/api/v2/spans/{**catch-all}")
+            var url = new Uri(zipkinConfig);
+            app.MapForwarder("/zipkin/{**catch-all}", $"http://{url.Host}:{url.Port}", "/api/v2/spans/{**catch-all}")
                 .DisableAntiforgery();
         }
         app.MapGroup("/authentication").MapLoginAndLogout();
