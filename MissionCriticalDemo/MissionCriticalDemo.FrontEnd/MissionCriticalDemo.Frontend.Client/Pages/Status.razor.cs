@@ -69,6 +69,9 @@ public partial class StatusModel : ComponentBase
     /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
+        if (!OperatingSystem.IsBrowser())
+            return;
+
         await FetchCurrentGasInStore();
         await HandleServerCallbacks();
     }
@@ -153,6 +156,7 @@ public partial class StatusModel : ComponentBase
             });
         });
 
+        Console.WriteLine($"Starting SignalR connection to {hubUrl}");
         await _hubConnection.StartAsync();
     }
 

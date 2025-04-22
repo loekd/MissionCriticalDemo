@@ -20,7 +20,7 @@ public static class DistributedApplicationBuilderExtensions
     /// Adds an Jaeger all in one container to the application model.
     /// </summary>
     public static IResourceBuilder<JaegerResource> AddJaeger(this IDistributedApplicationBuilder builder,
-      string name = "Jaeger", int zipkinPort = 9411, int otlpPort = 55681)
+      string name = "Jaeger", int zipkinPort = 9411, int otlpPort = 4318)
     {
         builder.Services.TryAddLifecycleHook<JaegerResourceLifecycleHook>();
         var jaeger = new JaegerResource(name);

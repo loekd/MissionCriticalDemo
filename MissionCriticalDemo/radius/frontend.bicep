@@ -15,31 +15,26 @@ param applicationName string = 'demo04'
 param containerRegistry string = 'acrradius.azurecr.io'
 
 @description('Indicates whether to use HTTPS for the Dispatch API. (default: true for prod)')
-param useHttps string = contains(environmentName, 'prod') ? 'true': 'false'
+param useHttps string = contains(environmentName, 'prod') ? 'true' : 'false'
 
 @description('The host name of the application.')
 param hostName string = contains(environmentName, 'prod') ? 'demo.loekd.com' : 'localhost'
 
-@description('The host name of the application.')
-param overrideDispatchApiHostAndPort string = ''
-
 @description('The k8s namespace name.')
 var kubernetesNamespace = '${environmentName}-${applicationName}'
 
-@description('The host and port on which the Dispatch API is exposed (through the gateway).')
-var dispatchApiHostAndPort = empty(overrideDispatchApiHostAndPort) ? useHttps == 'true' ? 'https://${hostName}' : 'http://${hostName}' : overrideDispatchApiHostAndPort
-
 @description('The port on which the frontend is exposed internally.')
-var frontendPort = 80
-
-@description('The name of the volume to mount the ConfigMap to.')
-var volumeName = 'scripts'
+var frontendPort = 8080
 
 @description('The name of the frontend container.')
 var frontendContainerName = 'frontend'
 
-var certPrivateKey = contains(environmentName, 'prod') ? loadTextContent('./certificates/privkey.pem') : loadTextContent('./certificates/localhost.key')
-var certPublicKey = contains(environmentName, 'prod') ? loadTextContent('./certificates/fullchain.pem') : loadTextContent('./certificates/localhost.crt')
+var certPrivateKey = contains(environmentName, 'prod')
+  ? loadTextContent('./certificates/privkey.pem')
+  : loadTextContent('./certificates/localhost.key')
+var certPublicKey = contains(environmentName, 'prod')
+  ? loadTextContent('./certificates/fullchain.pem')
+  : loadTextContent('./certificates/localhost.crt')
 
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
@@ -50,51 +45,26 @@ module shared 'shared.bicep' = {
   }
 }
 
-// // Create a ConfigMap with the frontend appsettings.json. This is mounted to the frontend container.
-// // It points to the public endpoint of the Dispatch API.
-// // This is currently leaking K8s details into the Radius file.
-// resource configMap 'core/ConfigMap@v1' = {
-//   metadata: {
-//     name: 'frontend-scripts'
-//     namespace: kubernetesNamespace
-//   }
-//   data: {
-//     #disable-next-line prefer-interpolation
-//     'appsettings.json': concat('''
-//     {
-//       "AzureAdB2C": {
-//         "Authority": "https://loekdb2c.b2clogin.com/loekdb2c.onmicrosoft.com/B2C_1_UserFlowSuSi",
-//         "ClientId": "81c2fe74-bc14-4c65-b209-52f042cd3263",
-//         "ValidateAuthority": false
-//       },
-//       "DispatchApi": {
-//         "Endpoint": "''', dispatchApiHostAndPort, '''"
-//       }
-//     }
-//     ''')
-//   }
-// }
-
-
 // Blazor WASM Frontend on Nginx
 resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
   name: frontendContainerName
   properties: {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
+
     container: {
-      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:2.0.0' : '${containerRegistry}/missioncriticaldemo.frontend:latest'
+      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:2.0.1' : '${containerRegistry}/missioncriticaldemo.frontend:2.0.1'
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'Always'
       ports: {
         web: {
           containerPort: frontendPort
+          port:          frontendPort
           protocol: 'TCP'
         }
       }
       env: {
-        // ASP.NET Core configuration to bind to port 80 (nginx default)
         ASPNETCORE_URLS: { 
-          value: 'http://+${frontendPort}' 
+          value: 'http://+:${frontendPort}' 
         }
         AzureAdB2C__ClientSecret: {
           value: loadTextContent('./secrets/clientsecret.txt')
@@ -110,30 +80,24 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
     //   kubernetes: {
     //     pod: {
     //       containers: [
-    //         {
-    //           name: frontendContainerName
-    //           volumeMounts: [
-    //             {
-    //               name: volumeName
-    //               mountPath: '/usr/share/nginx/html/appsettings.json'
-    //               subPath: 'appsettings.json'
-    //             }
-    //           ]
-    //         }
-    //       ]
-    //       volumes: [
-    //         {
-    //           name: volumeName
-    //           configMap: {
-    //             name: configMap.metadata.name
+    //       { 
+    //         name: frontendContainerName
+    //         securityContext: {
+    //           runAsUser: 0         // switch to root
+    //           runAsGroup: 0
+    //           capabilities: {
+    //             add: [
+    //               'NET_BIND_SERVICE'  // allow binding to ports < 1024
+    //             ]
     //           }
     //         }
-    //       ]
+    //       }]
     //     }
     //   }
-    // }
+    //}
   }
 }
+
 
 // Get existing Dispatch API to locate its internal port
 resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' existing = {
@@ -150,10 +114,10 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
     hostname: {
       fullyQualifiedHostname: hostName
     }
-    tls: {
+    tls: useHttps == 'true' ? {
       sslPassthrough: false
       certificateFrom: appCert.id
-    }
+    } : {}
     routes: [
       {
         path: '/api' //Dispatch REST API
@@ -164,10 +128,11 @@ resource gateway 'Applications.Core/gateways@2023-10-01-preview' = {
         path: '/dispatchhub' //Dispatch websocket
         destination: 'http://${dispatch_api.name}:${dispatch_api.properties.container.ports.web.containerPort}'
         enableWebsockets: true
-      }      
+      }
       {
         path: '/' //frontend index.html
         destination: 'http://${frontend.name}:${frontend.properties.container.ports.web.containerPort}'
+        enableWebsockets: true
       }
     ]
   }
@@ -193,5 +158,3 @@ resource appCert 'Applications.Core/secretStores@2023-10-01-preview' = {
     }
   }
 }
-
-

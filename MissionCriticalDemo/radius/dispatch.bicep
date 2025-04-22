@@ -36,11 +36,11 @@ resource dispatch_api 'Applications.Core/containers@2023-10-01-preview' = {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
     container: {
-      image: empty(containerRegistry) ? 'missioncriticaldemo.dispatchapi:2.0.0' : '${containerRegistry}/missioncriticaldemo.dispatchapi:latest'
+      image: empty(containerRegistry) ? 'missioncriticaldemo.dispatchapi:2.0.0' : '${containerRegistry}/missioncriticaldemo.dispatchapi:2.0.0'
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'IfNotPresent'
       env: {
         ASPNETCORE_URLS: { 
-          value: 'http://+${dispatchApiPort}' 
+          value: 'http://+:${dispatchApiPort}' 
         }
       }
       ports: {
