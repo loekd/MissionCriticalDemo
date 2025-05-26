@@ -3,12 +3,12 @@ kind: Component
 metadata:
   name: plantstate
 spec:
-  type: state.mongodb
+  type: state.redis
   version: v1
   metadata:
-  - name: host
-    value: plant_stateserver:27017
-  - name: databaseName
-    value: "plant"
-  - name: collectionName
-    value: "plantCollection"
+    - name: redisHost
+      value: localhost:6380
+    - name: redisPassword
+      value: ""
+    - name: redisDB
+      value: "3"

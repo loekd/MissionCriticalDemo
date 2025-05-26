@@ -3,12 +3,12 @@ kind: Component
 metadata:
   name: gasinstorestate
 spec:
-  type: state.mongodb
+  type: state.redis
   version: v1
   metadata:
-  - name: host
-    value: dispatch_stateserver:27017
-  - name: databaseName
-    value: "gis"
-  - name: collectionName
-    value: "gisCollection"
+    - name: redisHost
+      value: localhost:6380
+    - name: redisPassword
+      value: ""
+    - name: redisDB
+      value: "1"

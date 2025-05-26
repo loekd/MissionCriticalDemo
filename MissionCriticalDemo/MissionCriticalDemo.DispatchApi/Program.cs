@@ -8,8 +8,14 @@ using MissionCriticalDemo.Messages;
 using MissionCriticalDemo.DispatchApi.InputValidation;
 using MissionCriticalDemo.DispatchApi.Hubs;
 using MissionCriticalDemo.DispatchApi.Services;
+using System.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults("DispatchApi");
+
+// Register ActivitySource before other services that depend on it
+builder.Services.AddSingleton(new ActivitySource("DispatchApi"));
 
 // Add services to the container.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -37,13 +43,15 @@ builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSch
 {
     options.TokenValidationParameters.ClockSkew = TimeSpan.FromMinutes(30);
     var existingOnTokenValidatedHandler = options.Events.OnAuthenticationFailed;
-    options.Events.OnAuthenticationFailed = async context =>
+    options.Events.OnAuthenticationFailed = async ctx =>
     {
-        await existingOnTokenValidatedHandler(context);
+        Console.WriteLine(ctx.Exception.Message);
+        await existingOnTokenValidatedHandler(ctx);
     };
 
-    options.Events.OnTokenValidated = ctx =>
+    options.Events.OnTokenValidated += ctx =>
     {
+        Console.WriteLine("Token validated");
         return Task.CompletedTask;
     };
 });
@@ -55,17 +63,20 @@ builder.Services.AddHostedService<OutboxProcessor>();
 builder.Services.AddHostedService<InboxProcessor>();
 
 //CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(builder =>
-    {
-        //allow the frontend with tokens
-        builder.AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .SetIsOriginAllowed((host) => true)
-                      .AllowCredentials();
-    });
-});
+// builder.Services.AddCors(options =>
+// {
+//     options.AddDefaultPolicy(builder =>
+//     {
+//         //allow the frontend with tokens
+//         builder.AllowAnyHeader()
+//                       .AllowAnyMethod()
+//                       .SetIsOriginAllowed((host) => true)
+//                       .AllowCredentials();
+//     });
+// });
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 app.UseResponseCompression();
@@ -98,11 +109,12 @@ app.UseAuthorization();
 app.UseCloudEvents();
 
 app.MapRazorPages();
-
 app.MapSubscribeHandler();
 app.MapControllers();
-
 app.MapHub<DispatchHub>("/dispatchhub");
 app.MapFallbackToFile("index.html");
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.Run();

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>MissionCriticalDemo.Server-C2CAD9A1-0097-405E-A325-25590195EA65</UserSecretsId>
@@ -16,10 +16,12 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.3" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.6" />
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta3.22114.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MissionCriticalDemo.FrontEnd\MissionCriticalDemo.FrontEnd.csproj" />
+    <ProjectReference Include="..\Aspire\MissionCriticalDemo.ServiceDefaults\MissionCriticalDemo.ServiceDefaults.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" />
   </ItemGroup>

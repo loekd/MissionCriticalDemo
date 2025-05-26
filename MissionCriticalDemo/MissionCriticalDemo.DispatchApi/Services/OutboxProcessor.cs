@@ -1,5 +1,7 @@
-﻿using Dapr.Client;
+﻿using System.Text.Json;
+using Dapr.Client;
 using MissionCriticalDemo.Messages;
+using System.Diagnostics;
 
 namespace MissionCriticalDemo.DispatchApi.Services
 {
@@ -7,27 +9,23 @@ namespace MissionCriticalDemo.DispatchApi.Services
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly ILogger<OutboxProcessor> _logger;
+        private readonly ActivitySource _activitySource;
         private const string _stateStoreName = "outboxstate";
         private const string _pubSubName = "dispatchpubsub";
         private const string _pubSubTopicName = "flowint";
-        private const string query = "{\"sort\": [{\"key\": \"value.Timestamp\",\"order\": \"DESC\"}]}";
-        private readonly CancellationTokenSource _stopTokenSource = new CancellationTokenSource();
+        private const string _outboxKeyTrackerKey = "outbox_key_tracker";
+        private readonly CancellationTokenSource _stopTokenSource = new();
 
-        /// <summary>
-        /// Monitors the outbox and processes messages if they are there.
-        /// </summary>
-        /// <param name="serviceProvider"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public OutboxProcessor(IServiceScopeFactory serviceScopeFactory, ILogger<OutboxProcessor> logger)
+        public OutboxProcessor(IServiceScopeFactory serviceScopeFactory, ActivitySource activitySource, ILogger<OutboxProcessor> logger)
         {
             _serviceScopeFactory = serviceScopeFactory ?? throw new ArgumentNullException(nameof(serviceScopeFactory));
             _logger = logger;
+            _activitySource = activitySource;
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            //return;
-            await Task.Delay(10_000);
+            await Task.Delay(10_000, cancellationToken);
 
             _logger.LogTrace("Running outbox processor");
 
@@ -57,15 +55,42 @@ namespace MissionCriticalDemo.DispatchApi.Services
 
         private async Task ProcessOutboxItems(DaprClient daprClient, CancellationToken stopToken)
         {
-            var response = await FetchOutboxItems(daprClient, stopToken);
+            using var activity = _activitySource.StartActivity("ProcessOutboxItems", ActivityKind.Internal);
+            
+            var keyTracker = await GetOutboxKeyTracker(daprClient, stopToken);
+            if (keyTracker.MessageKeys.Count == 0)
+                return;
 
-            if (response != null)
+            // Use a copy to allow safe removal during iteration
+            foreach (string key in new List<string>(keyTracker.MessageKeys))
             {
-                foreach (var flowRequest in response.Results)
+                try
                 {
-                    _logger.LogTrace("Publishing message id {RequestId} from customer {CustomerId}!", flowRequest.Data.RequestId, flowRequest.Data.CustomerId);
-                    await PublishRequestMessage(daprClient, flowRequest, stopToken);
-                    await DeleteOutboxMessage(daprClient, flowRequest, stopToken);
+                    var message = await daprClient.GetStateAsync<Request>(
+                        _stateStoreName, key, cancellationToken: stopToken);
+                    if (message != null)
+                    {
+                        _logger.LogTrace("Publishing message id {RequestId} from outbox", message.RequestId);
+
+                        // Get stored trace context for this message
+                        Dictionary<string, string>? traceContext = null;
+                        if (keyTracker.TraceContexts.TryGetValue(key, out var storedContext))
+                        {
+                            traceContext = storedContext;
+                        }
+
+                        await PublishRequestMessage(daprClient, message, traceContext, stopToken);
+                        await DeleteOutboxMessage(daprClient, key, stopToken);
+                    }
+                    else
+                    {
+                        // If message is null, simply remove the key from the tracker.
+                        await DeleteOutboxMessage(daprClient, key, stopToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing message with key {key}", key);
                 }
             }
         }
@@ -76,19 +101,76 @@ namespace MissionCriticalDemo.DispatchApi.Services
             return Task.CompletedTask;
         }
 
-        private static Task<StateQueryResponse<Request>> FetchOutboxItems(DaprClient daprClient, CancellationToken stopToken)
+        private async Task<OutboxKeyTracker> GetOutboxKeyTracker(DaprClient daprClient, CancellationToken cancellationToken)
         {
-            return daprClient.QueryStateAsync<Request>(_stateStoreName, query, cancellationToken: stopToken);
+            try
+            {
+                var tracker = await daprClient.GetStateAsync<OutboxKeyTracker>(
+                    _stateStoreName, _outboxKeyTrackerKey, cancellationToken: cancellationToken);
+                return tracker ?? new OutboxKeyTracker();
+            }
+            catch
+            {
+                return new OutboxKeyTracker();
+            }
         }
 
-        private static async Task DeleteOutboxMessage(DaprClient daprClient, StateQueryItem<Request> flowRequest, CancellationToken cancellationToken)
+        private async Task DeleteOutboxMessage(DaprClient daprClient, string key, CancellationToken cancellationToken)
         {
-            await daprClient.DeleteStateAsync(_stateStoreName, flowRequest.Key, cancellationToken: cancellationToken);
+            using var activity = _activitySource.StartActivity("DeleteOutboxMessage", ActivityKind.Internal);
+            activity?.SetTag("messageKey", key);
+            
+            // First remove key from tracker and then delete the message
+            var keyTracker = await GetOutboxKeyTracker(daprClient, cancellationToken);
+            keyTracker.MessageKeys.Remove(key);
+            keyTracker.TraceContexts.Remove(key);
+
+            var requests = new List<StateTransactionRequest>
+            {
+                new StateTransactionRequest(_outboxKeyTrackerKey, JsonSerializer.SerializeToUtf8Bytes(keyTracker), StateOperationType.Upsert),
+                new StateTransactionRequest(key, null, StateOperationType.Delete)
+            };
+
+            await daprClient.ExecuteStateTransactionAsync(_stateStoreName, requests, cancellationToken: cancellationToken);
         }
 
-        private static async Task PublishRequestMessage(DaprClient daprClient, StateQueryItem<Request> flowRequest, CancellationToken cancellationToken)
+        private async Task PublishRequestMessage(DaprClient daprClient, Request message, Dictionary<string, string>? traceContext, CancellationToken cancellationToken)
         {
-            await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, flowRequest.Data, cancellationToken: cancellationToken);
+            using var activity = _activitySource.StartActivity("PublishRequestMessage", ActivityKind.Producer, 
+                parentContext: traceContext != null ? ExtractActivityContext(traceContext) : default);
+
+            activity?.SetTag("requestId", message.RequestId);
+            activity?.SetTag("direction", message.Direction.ToString());
+            activity?.SetTag("amount", message.AmountInGWh);
+
+            // Always use the current activity context for the outgoing message
+            var metadata = new Dictionary<string, string>();
+            if (Activity.Current != null)
+            {
+                metadata["traceparent"] = Activity.Current.Id ?? string.Empty;
+                if (!string.IsNullOrEmpty(Activity.Current.TraceStateString))
+                {
+                    metadata["tracestate"] = Activity.Current.TraceStateString;
+                }
+            }
+
+            await daprClient.PublishEventAsync(_pubSubName, _pubSubTopicName, message, metadata, cancellationToken);
         }
+
+        private static ActivityContext ExtractActivityContext(Dictionary<string, string> traceContext)
+        {
+            if (traceContext.TryGetValue("traceparent", out var traceparent) && 
+                ActivityContext.TryParse(traceparent, traceContext.GetValueOrDefault("tracestate"), out var activityContext))
+            {
+                return activityContext;
+            }
+            return default;
+        }
+    }
+
+    public class OutboxKeyTracker
+    {
+        public List<string> MessageKeys { get; set; } = [];
+        public Dictionary<string, Dictionary<string, string>> TraceContexts { get; set; } = [];
     }
 }

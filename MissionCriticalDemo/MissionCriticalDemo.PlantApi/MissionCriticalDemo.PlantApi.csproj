@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>a88a1a80-a611-4a21-8d2e-9453bceb3ad7</UserSecretsId>
@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Aspire\MissionCriticalDemo.ServiceDefaults\MissionCriticalDemo.ServiceDefaults.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Messages\MissionCriticalDemo.Messages.csproj" />
     <ProjectReference Include="..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" />
   </ItemGroup>

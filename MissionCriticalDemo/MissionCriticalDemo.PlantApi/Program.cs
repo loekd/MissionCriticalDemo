@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using MissionCriticalDemo.Messages;
 using MissionCriticalDemo.PlantApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults("PlantApi");
 // Add services to the container.
 
 builder.Services.AddControllers(options => options.InputFormatters.Add(new DaprRawPayloadInputFormatter()))
@@ -16,14 +18,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IMappers, Mappers>();
 builder.Services.AddScoped<IGasStorage, GasStorage>();
 
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 //important to leave this out, as Dapr will call the non-https endpoint
 //app.UseHttpsRedirection();
@@ -73,8 +75,10 @@ public class DaprRawPayloadInputFormatter : InputFormatter
 }
 
 
+[SuppressMessage("ReSharper", "PropertyCanBeMadeInitOnly.Global")]
 public class RawMessage
 {
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     public string data { get; set; }
     public string datacontenttype { get; set; }
     public string id { get; set; }

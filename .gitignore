@@ -389,3 +389,5 @@ override.tf.json
 # Terragrunt debug output
 terragrunt-debug.tfvars.json
 **/*prepare.md
+MissionCriticalDemo/radius/secrets/*
+MissionCriticalDemo/radius/certificates/*

@@ -7,28 +7,6 @@ spec:
   version: v1
   metadata:
     - name: redisHost
-      value: redis_service:6379
+      value: localhost:6380
     - name: redisPassword
       value: ""
-
-#apiVersion: dapr.io/v1alpha1
-#kind: Component
-#metadata:
-#  name: dispatchpubsub
-#spec:
-#  type: pubsub.rabbitmq
-#  metadata:
-#  - name: host
-#    value: "amqp://rabbitmq:5672"
-#  - name: consumerID
-#    value: "61415901178272324029" # Required. Any unique ID. Example: "myConsumerID"
-#  - name: durable
-#    value: "true" # Optional. Default: "false"
-#  - name: deletedWhenUnused
-#    value: "false"
-#  - name: autoAck
-#    value: "false"
-#  - name: deliveryMode
-#    value: "2" # Optional. Default: "0". Values between 0 - 2.
-#  - name: requeueInFailure
-#    value: "true"

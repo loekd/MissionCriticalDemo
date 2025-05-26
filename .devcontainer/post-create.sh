@@ -5,7 +5,7 @@ while (! kubectl cluster-info ); do
   # Docker takes a few seconds to initialize
   echo "Waiting for Docker to launch..."
   k3d cluster delete
-  k3d cluster create -p '8081:80@loadbalancer' --k3s-arg '--disable=traefik@server:0'
+  k3d cluster create -p '80:80@loadbalancer' -p '443:443@loadbalancer' --k3s-arg '--disable=traefik@server:0'
   sleep 1
 done
 
@@ -54,3 +54,6 @@ echo "Run \"rad init\" or \"rad run\" to run the containers using radius, from t
 
 ## mark repo as safe
 git config --global --add safe.directory /workspaces/MissionCriticalDemo
+
+## add dotnet dev cert
+dotnet dev-certs https
