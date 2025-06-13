@@ -9,7 +9,7 @@ rad deploy ./environments/production.bicep -g ateam
 rad deploy ./app.bicep --parameters environmentName=prod --parameters hostName=demo.loekd.com --parameters useHttps=true -g ateam
 
 #check api health
-curl https://demo.loekd.com/api/healthz
+#curl https://demo.loekd.com/api/healthz
 
 open -n -a "Microsoft Edge" "https://demo.loekd.com/dispatch"
 

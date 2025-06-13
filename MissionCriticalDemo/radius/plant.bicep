@@ -60,6 +60,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'IfNotPresent'
       env: {
         ASPNETCORE_URLS: {value: 'http://+:${plantApiPort}' }
+        OTEL_EXPORTER_OTLP_ENDPOINT: {value: '' }
       }
       ports: {
         api: {

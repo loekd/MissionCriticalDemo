@@ -16,7 +16,7 @@ var otlpGrpcPort = 4317
 
 var readinessProbe = {
   httpGet: {
-    path: 'http://localhost/health'
+    path: '/health'
     port: 13133
   }
   initialDelaySeconds: 5
@@ -40,31 +40,40 @@ resource configMap 'core/ConfigMap@v1' = {
   data: {
     #disable-next-line prefer-interpolation
     'otel-collector-config.yaml': concat('''
-    receivers:
-      zipkin:
-        endpoint: "0.0.0.0:9411"
-    extensions:
-      health_check:
-        path: "/health"
-        endpoint: "0.0.0.0:13133"
-      pprof:
-        endpoint: :1888
-      zpages:
-        endpoint: :55679
-    exporters:
-      debug:
-        verbosity: basic
-      azuremonitor:
-        connection_string: "InstrumentationKey=25cb4d8b-5d12-45e5-8007-0e9b6c6a5c15;IngestionEndpoint=https://northeurope-2.in.applicationinsights.azure.com/;LiveEndpoint=https://northeurope.livediagnostics.monitor.azure.com/;ApplicationId=2f51e7eb-f120-4961-8fbd-52905eb88912"
-    processors:
-      batch:
-    service:
-      extensions: [pprof, zpages, health_check]
-      pipelines:
-        traces:
-          receivers: [zipkin]
-          processors: [batch]
-          exporters: [azuremonitor, debug]''')
+receivers:
+  zipkin:
+    endpoint: "0.0.0.0:9411"
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+extensions:
+  health_check:
+    path: "/health"
+    endpoint: "0.0.0.0:13133"
+  pprof:
+    endpoint: :1888
+  zpages:
+    endpoint: :55679
+exporters:
+  debug:
+    verbosity: basic
+  azuremonitor:
+    connection_string: "InstrumentationKey=25cb4d8b-5d12-45e5-8007-0e9b6c6a5c15;IngestionEndpoint=https://northeurope-2.in.applicationinsights.azure.com/"
+processors:
+  batch:
+service:
+  telemetry:
+    logs:
+      level: debug
+  extensions: [pprof, zpages, health_check]
+  pipelines:
+    traces:
+      receivers: [zipkin, otlp]
+      processors: [batch]
+      exporters: [azuremonitor, debug]''')
   }
 }
 
@@ -94,14 +103,10 @@ resource otlpCollector 'apps/Deployment@v1' = {
         containers: [
           {
             name: 'otlpcollector'
-            image: 'otel/opentelemetry-collector-contrib'
+            image: 'otel/opentelemetry-collector-contrib:0.126.0'
             securityContext: {
               privileged: true
-            }
-            command: [
-              '/otelcol-contrib'
-              '--config=/conf/otel-collector-config.yaml'
-            ]            
+            }           
             ports: [
               {
                 containerPort: zipkinPort
@@ -116,7 +121,7 @@ resource otlpCollector 'apps/Deployment@v1' = {
             volumeMounts: [
               {
                 name: volumeName
-                mountPath: '/conf/otel-collector-config.yaml'
+                mountPath: '/etc/otelcol-contrib/config.yaml'
                 subPath: 'otel-collector-config.yaml'
               }
             ]
@@ -180,6 +185,8 @@ output result object = {
     host: host
     zipkinPort: zipkinPort
     zipkinEndpoint: 'http://${host}:${zipkinPort}/api/v2/spans'
+    otlpEndpoint: 'http://${host}:${otlpHttpPort}/v1/traces'
+    otlpGrpcEndpoint: 'http://${host}:${otlpGrpcPort}'
   }
   secrets: {
     //none needed

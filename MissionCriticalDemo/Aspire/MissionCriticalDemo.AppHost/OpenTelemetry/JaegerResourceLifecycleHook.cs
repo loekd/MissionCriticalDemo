@@ -17,6 +17,7 @@ internal class JaegerResourceLifecycleHook(ResourceNotificationService notificat
         foreach (var resource in appModel.Resources.OfType<JaegerResource>())
         {
             //check the health endpoint
+            // "/health/status"
         }
         return Task.CompletedTask;
     }

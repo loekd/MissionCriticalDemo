@@ -42,7 +42,7 @@ resource prodEnv 'Applications.Core/environments@2023-10-01-preview' = {
       'Applications.Core/extenders': {
         otlpCollectorRecipe: {
           templateKind: 'bicep'
-          templatePath: 'acrradius.azurecr.io/recipes/otlp:0.1.0'
+          templatePath: 'acrradius.azurecr.io/recipes/otlp:0.1.1'
         }
       }
     }

@@ -86,11 +86,13 @@ public static class Extensions
         }
         
         //use defaults
-        var useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
-
+        var otlpExporterUri = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+        bool useOtlpExporter = !string.IsNullOrWhiteSpace(otlpExporterUri);
         if (useOtlpExporter)
         {
-            builder.Services.AddOpenTelemetry().UseOtlpExporter();
+            builder.Services
+                .AddOpenTelemetry()
+                .UseOtlpExporter(OtlpExportProtocol.HttpProtobuf, new Uri(otlpExporterUri!));
         }
 
         var activitySource = new ActivitySource(serviceName);
