@@ -7,11 +7,11 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.csproj", "MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend/"]
-COPY ["MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.Client/MissionCriticalDemo.Frontend.Client.csproj", "MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.Client/"]
+COPY ["MissionCriticalDemo.FrontEnd/MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.csproj", "MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend/"]
+COPY ["MissionCriticalDemo.FrontEnd/MissionCriticalDemo.Frontend.Client/MissionCriticalDemo.Frontend.Client.csproj", "MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.Client/"]
 RUN dotnet restore "MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend.csproj"
 COPY . .
-WORKDIR "/src/MissionCriticalDemo.Frontend/MissionCriticalDemo.Frontend"
+WORKDIR "/src/MissionCriticalDemo.FrontEnd/MissionCriticalDemo.Frontend"
 RUN dotnet build "MissionCriticalDemo.Frontend.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

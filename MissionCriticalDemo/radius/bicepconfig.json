@@ -7,6 +7,6 @@
       // "dynamicTypeLoading": true
     },
     "extensions": {
-      "radius": "br:biceptypes.azurecr.io/radius:0.43"
+      "radius": "br:biceptypes.azurecr.io/radius:0.52"
     }
 }

@@ -61,7 +61,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "certificates", "certificate
 	ProjectSection(SolutionItems) = preProject
 		radius\certificates\fullchain.pem = radius\certificates\fullchain.pem
 		radius\certificates\privkey.pem = radius\certificates\privkey.pem
-		radius\certificates\README = radius\certificates\README
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "environments", "environments", "{5ECEEE82-458D-47CB-B22A-ED1F9BCD94E4}"

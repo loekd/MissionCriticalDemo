@@ -62,7 +62,7 @@ services:
     image: ${DOCKER_REGISTRY-}missioncriticaldemo.frontend
     build:
       context: .
-      dockerfile: MissionCriticalDemo.FrontEnd/Dockerfile
+      dockerfile: MissionCriticalDemo.FrontEnd/MissionCriticalDemo.FrontEnd/Dockerfile
 
   dapr-dashboard:
     container_name: dapr_dashboard

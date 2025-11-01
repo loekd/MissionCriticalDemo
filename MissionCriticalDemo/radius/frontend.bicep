@@ -29,12 +29,9 @@ var frontendPort = 8080
 @description('The name of the frontend container.')
 var frontendContainerName = 'frontend'
 
-var certPrivateKey = contains(environmentName, 'prod')
-  ? loadTextContent('./certificates/privkey.pem')
-  : loadTextContent('./certificates/localhost.key')
-var certPublicKey = contains(environmentName, 'prod')
-  ? loadTextContent('./certificates/fullchain.pem')
-  : loadTextContent('./certificates/localhost.crt')
+var certPrivateKey = loadTextContent('./certificates/privkey.pem')  
+var certPublicKey = loadTextContent('./certificates/fullchain.pem')
+
 
 //Deploy shared resources like Jaeger and PubSub
 module shared 'shared.bicep' = {
@@ -53,7 +50,7 @@ resource frontend 'Applications.Core/containers@2023-10-01-preview' = {
     environment: shared.outputs.environment.id
 
     container: {
-      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:2.0.1' : '${containerRegistry}/missioncriticaldemo.frontend:2.0.1'
+      image: empty(containerRegistry) ? 'missioncriticaldemo.frontend:latest' : '${containerRegistry}/missioncriticaldemo.frontend:2.0.1'
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'Always'
       ports: {
         web: {

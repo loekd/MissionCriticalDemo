@@ -54,7 +54,7 @@ services:
 
   mongodb_plant:
     container_name: plant_stateserver
-    image: bitnami/mongodb:6.0.2
+    image: bitnami/mongodb:latest
     restart: always
     ports:
       - 27019:27017

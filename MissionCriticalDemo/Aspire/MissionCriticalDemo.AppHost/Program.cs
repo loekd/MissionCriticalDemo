@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using CommunityToolkit.Aspire.Hosting.Dapr;
 using MissionCriticalDemo.AppHost.OpenTelemetry;
 using MissionCriticalDemo.Shared;
@@ -46,20 +47,35 @@ var plantStateStore = builder.AddDaprStateStore("plantstate", new DaprComponentO
 
 var dispatchApi = builder
     .AddProject<Projects.MissionCriticalDemo_DispatchApi>("DispatchApi")
-    .WithDaprSidecar()
-    .WithReference(dispatchInboxStateStore)
-    .WithReference(dispatchOutboxStateStore)
-    .WithReference(dispatchGisStateStore)
-    .WithReference(dispatchPubSub)
-    .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
+    .WithDaprSidecar(opt =>
+        {
+            opt.WithOptions(new DaprSidecarOptions
+            {
+                AppId = "dispatchapi",
+                AppPort = 80,
+                AppProtocol = "http",
+                AppHealthCheckPath = "/healthz",
+                AppHealthProbeInterval = 10,
+                AppHealthProbeTimeout = 5,
+                AppHealthThreshold = 3,
+                ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath)
+            });
+            opt.WithReference(dispatchInboxStateStore);
+            opt.WithReference(dispatchOutboxStateStore);
+            opt.WithReference(dispatchGisStateStore);
+            opt.WithReference(dispatchPubSub);
+        })
+        .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WithExternalHttpEndpoints()
     .WaitFor(jaeger);
 
 var plantApi = builder
     .AddProject<Projects.MissionCriticalDemo_PlantApi>("PlantApi")
-    .WithDaprSidecar()
-    .WithReference(plantStateStore)
-    .WithReference(dispatchPubSub)
+    .WithDaprSidecar(opt =>
+        {
+            opt.WithReference(plantStateStore);
+            opt.WithReference(dispatchPubSub);
+        })
     .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WaitFor(jaeger);
 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Logging.Abstractions;
 using DataRequest = MissionCriticalDemo.Shared.Contracts.Request;
 using MessageRequest = MissionCriticalDemo.Messages.Request;
 
@@ -31,7 +32,7 @@ namespace MissionCriticalDemo.Messages
                 .ForCtorParam(nameof(DataRequest.Direction), x => x.MapFrom(i => i.Direction))
                 .ForCtorParam(nameof(DataRequest.RequestId), x => x.MapFrom(i => i.RequestId))
                 .ForCtorParam(nameof(DataRequest.Timestamp), x => x.MapFrom(i => i.Timestamp))
-                );
+                , NullLoggerFactory.Instance);
             Mapper mapper = new(configuration);
             return mapper.Map<DataRequest>(input);
         }
@@ -48,7 +49,7 @@ namespace MissionCriticalDemo.Messages
                 .ForCtorParam(nameof(DataCustomerRequest.CurrentFillLevel), x => x.MapFrom(i => i.CurrentFillLevel))
                 .ForCtorParam(nameof(DataCustomerRequest.MaxFillLevel), x => x.MapFrom(i => i.MaxFillLevel))
                 .ForCtorParam(nameof(DataCustomerRequest.Success), x => x.MapFrom(i => i.Success))
-                );
+                , NullLoggerFactory.Instance);
             Mapper mapper = new(configuration);
             return mapper.Map<DataCustomerRequest>(input);
         }
@@ -62,7 +63,7 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(MessageRequest.RequestId), x => x.MapFrom(i => i.RequestId))
             .ForCtorParam(nameof(MessageRequest.Timestamp), x => x.MapFrom(i => i.Timestamp))
             .ForCtorParam(nameof(MessageRequest.CustomerId), x => x.MapFrom(i => customerId))
-            );
+                , NullLoggerFactory.Instance);
 
             Mapper mapper = new(configuration);
             return mapper.Map<MessageRequest>(input);
@@ -78,7 +79,8 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(DataResponse.ResponseId), x => x.MapFrom(i => i.RequestId))
             .ForCtorParam(nameof(DataResponse.Success), x => x.MapFrom(i => success))
             .ForCtorParam(nameof(DataResponse.TotalAmountInGWh), x => x.MapFrom(i => customerTotal))
-            .ForCtorParam(nameof(DataResponse.CurrentFillLevel), x => x.MapFrom(i => i.CurrentFillLevel)));
+            .ForCtorParam(nameof(DataResponse.CurrentFillLevel), x => x.MapFrom(i => i.CurrentFillLevel))
+                , NullLoggerFactory.Instance);
 
             Mapper mapper = new(configuration);
             return mapper.Map<DataResponse>(input);
@@ -93,7 +95,7 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(MessageResponse.Timestamp), x => x.MapFrom(i => i.Timestamp))
             .ForCtorParam(nameof(MessageResponse.ResponseId), x => x.MapFrom(i => i.ResponseId))
             .ForCtorParam(nameof(MessageResponse.CustomerId), x => x.MapFrom(i => customerId))
-            );
+                , NullLoggerFactory.Instance);
             Mapper mapper = new(configuration);
             return mapper.Map<MessageResponse>(input);
         }
@@ -111,7 +113,7 @@ namespace MissionCriticalDemo.Messages
             .ForCtorParam(nameof(MessageResponse.Timestamp), x => x.MapFrom(i => timestamp))
             .ForCtorParam(nameof(MessageResponse.CurrentFillLevel), x => x.MapFrom(i => currentFillLevel))
             .ForCtorParam(nameof(MessageResponse.MaxFillLevel), x => x.MapFrom(i => maxFillLevel))
-            );
+                , NullLoggerFactory.Instance);
             Mapper mapper = new(configuration);
             MessageResponse flowResponse = mapper.Map<MessageResponse>(input);
             return flowResponse;

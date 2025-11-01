@@ -6,7 +6,7 @@ rad workspace switch cloud
 rad group create ateam
 
 rad deploy ./environments/production.bicep -g ateam
-rad deploy ./app.bicep --parameters environmentName=prod --parameters hostName=demo.loekd.com --parameters useHttps=true -g ateam
+rad deploy ./app.bicep --parameters environmentName=prod --parameters hostName=demo.loekd.com --parameters useHttps=true -g ateam -e prod
 
 #check api health
 curl https://demo.loekd.com/api/healthz

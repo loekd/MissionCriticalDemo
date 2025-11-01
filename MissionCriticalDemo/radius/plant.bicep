@@ -56,7 +56,7 @@ resource plant_api 'Applications.Core/containers@2023-10-01-preview' = {
     application: shared.outputs.application.id
     environment: shared.outputs.environment.id
     container: {
-      image: empty(containerRegistry) ? 'missioncriticaldemo.plantapi:2.0.0' : '${containerRegistry}/missioncriticaldemo.plantapi:2.0.0'
+      image: empty(containerRegistry) ? 'missioncriticaldemo.plantapi:latest' : '${containerRegistry}/missioncriticaldemo.plantapi:2.0.0'
       imagePullPolicy: empty(containerRegistry) ? 'Never' : 'IfNotPresent'
       env: {
         ASPNETCORE_URLS: {value: 'http://+:${plantApiPort}' }

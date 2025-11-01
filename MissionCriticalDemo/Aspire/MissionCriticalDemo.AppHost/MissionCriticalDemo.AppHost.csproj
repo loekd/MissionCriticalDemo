@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.1.0" />
+  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -12,15 +12,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.2.1" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="9.2.1" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.2.1" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.1" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.8.0" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="9.8.0" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.8.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\MissionCriticalDemo.DispatchApi\MissionCriticalDemo.DispatchApi.csproj" />    
-    <ProjectReference Include="..\..\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend.csproj" />
+    <ProjectReference Include="..\..\MissionCriticalDemo.FrontEnd\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend.csproj" />
     <ProjectReference Include="..\..\MissionCriticalDemo.PlantApi\MissionCriticalDemo.PlantApi.csproj" />
     <ProjectReference Include="..\..\MissionCriticalDemo.Shared\MissionCriticalDemo.Shared.csproj" IsAspireProjectResource="false" />
   </ItemGroup>

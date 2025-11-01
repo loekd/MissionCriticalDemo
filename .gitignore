@@ -391,3 +391,5 @@ terragrunt-debug.tfvars.json
 **/*prepare.md
 MissionCriticalDemo/radius/secrets/*
 MissionCriticalDemo/radius/certificates/*
+/MissionCriticalDemo/.idea/*
+/MissionCriticalDemo/Aspire/MissionCriticalDemo.AppHost/.aspire/settings.json
