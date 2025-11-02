@@ -6,13 +6,16 @@ using MissionCriticalDemo.Shared;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-const string daprComponentsPath = "/Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/components";
+string daprComponentsPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!, "..", "..", "..", "..", "..", "components"));
 
 //A containerized pub/sub message broker & state store:
+var redisPassword =
+    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => "S3cr3tPassw0rd!");
 var redis = builder
-    .AddRedis("redis")
-    .WithEndpoint(name:"redis-master", port: 6380, targetPort: 6379)
-    .WithLifetime(ContainerLifetime.Persistent)
+    .AddRedis("redis", password: redisPassword)
+    .WithHostPort(6380)     
+    .WithLifetime(ContainerLifetime.Session)
+    .WithEndpointProxySupport(false)
     .WithRedisInsight();
 
 //Open telemetry collector
@@ -52,13 +55,11 @@ var dispatchApi = builder
             opt.WithOptions(new DaprSidecarOptions
             {
                 AppId = "dispatchapi",
-                AppPort = 80,
-                AppProtocol = "http",
-                AppHealthCheckPath = "/healthz",
-                AppHealthProbeInterval = 10,
-                AppHealthProbeTimeout = 5,
-                AppHealthThreshold = 3,
-                ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath)
+                AppPort = 7079,
+                AppProtocol = "https",
+                ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
+                SchedulerHostAddress = "", // Disable Dapr scheduler
+                PlacementHostAddress = "", // Disable Dapr placement
             });
             opt.WithReference(dispatchInboxStateStore);
             opt.WithReference(dispatchOutboxStateStore);
@@ -67,17 +68,29 @@ var dispatchApi = builder
         })
         .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WithExternalHttpEndpoints()
-    .WaitFor(jaeger);
+    .WaitFor(jaeger)
+    .WaitFor(redis);
 
 var plantApi = builder
     .AddProject<Projects.MissionCriticalDemo_PlantApi>("PlantApi")
     .WithDaprSidecar(opt =>
         {
+            opt.WithOptions(new DaprSidecarOptions
+            {
+                AppId = "plantapi",
+                AppPort = 7071,
+                AppProtocol = "https",
+                ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
+                SchedulerHostAddress = "", // Disable Dapr scheduler
+                PlacementHostAddress = "", // Disable Dapr placement
+            });
+            
             opt.WithReference(plantStateStore);
             opt.WithReference(dispatchPubSub);
         })
     .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
-    .WaitFor(jaeger);
+    .WaitFor(jaeger)
+    .WaitFor(redis);
 
 var frontend = builder
     .AddProject<Projects.MissionCriticalDemo_Frontend>("Frontend")
@@ -86,7 +99,9 @@ var frontend = builder
     .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WithEnvironment(Constants.ZipkinEndpoint, jaeger.Resource.ZipkinEndpoint)
     .WaitFor(jaeger)
-    .WaitFor(dispatchApi);
+    .WaitFor(dispatchApi)
+    .WaitFor(plantApi);
+
 
 builder.Build().Run();
 

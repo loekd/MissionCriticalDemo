@@ -9,6 +9,8 @@ spec:
     - name: redisHost
       value: localhost:6380
     - name: redisPassword
-      value: ""
+      value: "S3cr3tPassw0rd!"
     - name: redisDB
       value: "0"
+scopes:
+  - dispatchapi

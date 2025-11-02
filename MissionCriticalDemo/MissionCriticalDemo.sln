@@ -49,7 +49,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MissionCriticalDemo.Service
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MissionCriticalDemo.Frontend", "MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend.csproj", "{72E43C45-A97B-4048-93D2-37F81CEF247B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MissionCriticalDemo.Frontend.Client", "MissionCriticalDemo.Frontend\MissionCriticalDemo.Frontend.Client\MissionCriticalDemo.Frontend.Client.csproj", "{B7A9BA45-8F4E-45AA-867C-8D39A9FBF10E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MissionCriticalDemo.Frontend.Client", "MissionCriticalDemo.FrontEnd\MissionCriticalDemo.Frontend.Client\MissionCriticalDemo.Frontend.Client.csproj", "{B7A9BA45-8F4E-45AA-867C-8D39A9FBF10E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{C02409CF-4FB1-45C6-ADA8-726C09ECA433}"
 	ProjectSection(SolutionItems) = preProject
