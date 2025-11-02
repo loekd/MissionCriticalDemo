@@ -14,7 +14,7 @@ var redisPassword =
 var redis = builder
     .AddRedis("redis", password: redisPassword)
     .WithHostPort(6380)     
-    .WithLifetime(ContainerLifetime.Session)
+    .WithLifetime(ContainerLifetime.Persistent)
     .WithEndpointProxySupport(false)
     .WithRedisInsight();
 
