@@ -1,4 +1,4 @@
-cd /Users/loekd/projects/MissionCriticalDemo/MissionCriticalDemo/radius/
+cd /Users/loekd/projects/GH/MissionCriticalDemo/MissionCriticalDemo/radius
 clear
 
 rad workspace list
