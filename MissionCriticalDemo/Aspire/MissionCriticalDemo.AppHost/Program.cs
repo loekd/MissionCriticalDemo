@@ -10,10 +10,10 @@ string daprComponentsPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(
 
 //A containerized pub/sub message broker & state store:
 var redisPassword =
-    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => "S3cr3tPassw0rd!");
+    builder.AddParameter("Redis-Password", secret: true);
 var redis = builder
     .AddRedis("redis", password: redisPassword)
-    .WithHostPort(6380)     
+    .WithHostPort(6380)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithEndpointProxySupport(false)
     .WithRedisInsight();
@@ -60,16 +60,21 @@ var dispatchApi = builder
                 ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
                 SchedulerHostAddress = "", // Disable Dapr scheduler
                 PlacementHostAddress = "", // Disable Dapr placement
+                Config = $"{daprComponentsPath}/localconfig.yaml"
             });
             opt.WithReference(dispatchInboxStateStore);
             opt.WithReference(dispatchOutboxStateStore);
             opt.WithReference(dispatchGisStateStore);
             opt.WithReference(dispatchPubSub);
         })
-        .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
+    .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WithExternalHttpEndpoints()
     .WaitFor(jaeger)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .WaitFor(dispatchInboxStateStore)
+    .WaitFor(dispatchOutboxStateStore)
+    .WaitFor(dispatchGisStateStore)
+    .WaitFor(dispatchPubSub);
 
 var plantApi = builder
     .AddProject<Projects.MissionCriticalDemo_PlantApi>("PlantApi")
@@ -83,6 +88,7 @@ var plantApi = builder
                 ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
                 SchedulerHostAddress = "", // Disable Dapr scheduler
                 PlacementHostAddress = "", // Disable Dapr placement
+                Config = $"{daprComponentsPath}/localconfig.yaml"
             });
             
             opt.WithReference(plantStateStore);
@@ -90,7 +96,9 @@ var plantApi = builder
         })
     .WithEnvironment(Constants.OtlpEndpoint, jaeger.Resource.OtlpEndpoint)
     .WaitFor(jaeger)
-    .WaitFor(redis);
+    .WaitFor(redis)
+    .WaitFor(plantStateStore)
+    .WaitFor(dispatchPubSub);
 
 var frontend = builder
     .AddProject<Projects.MissionCriticalDemo_Frontend>("Frontend")
