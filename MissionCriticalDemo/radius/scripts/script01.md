@@ -1,4 +1,4 @@
-cd /Users/loekd/projects/GH/MissionCriticalDemo/MissionCriticalDemo/radius
+pushd . && cd $(git rev-parse --show-toplevel) && cd MissionCriticalDemo/radius
 clear
 
 rad workspace switch local
@@ -26,3 +26,5 @@ open -a "Microsoft Edge" "https://localhost/dispatch"
 killall kubectl
 
 #rad app delete -n demo04 -g ateam -e test -y
+
+killall dotnet && clear && popd

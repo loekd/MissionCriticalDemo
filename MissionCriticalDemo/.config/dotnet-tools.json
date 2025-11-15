@@ -8,6 +8,13 @@
         "dotnet-outdated"
       ],
       "rollForward": false
+    },
+    "centralisedpackageconverter": {
+      "version": "1.0.74",
+      "commands": [
+        "central-pkg-converter"
+      ],
+      "rollForward": false
     }
   }
 }

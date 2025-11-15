@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -9,14 +9,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.3.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
-        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="9.0.10" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.10" />
-        <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="9.5.2" />
-        <PackageReference Include="Microsoft.Identity.Web" Version="4.0.1" />
-        <PackageReference Include="MudBlazor" Version="8.13.0" />
-        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+        <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" />
+        <PackageReference Include="Microsoft.Identity.Web" />
+        <PackageReference Include="MudBlazor" />
+        <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
         <ProjectReference Include="../../Aspire/MissionCriticalDemo.ServiceDefaults/MissionCriticalDemo.ServiceDefaults.csproj" />
         <ProjectReference Include="../../MissionCriticalDemo.Shared/MissionCriticalDemo.Shared.csproj" />
         <ProjectReference Include="..\MissionCriticalDemo.Frontend.Client\MissionCriticalDemo.Frontend.Client.csproj" />
