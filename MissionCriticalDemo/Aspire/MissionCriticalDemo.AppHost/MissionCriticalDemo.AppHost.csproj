@@ -9,7 +9,7 @@
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>2c69d3ee-72b7-4283-8a8b-1dc86b762e21</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIREPROXYENDPOINTS001</NoWarn>
+    <NoWarn>$(NoWarn);ASPIREPROXYENDPOINTS001;NU1510;CS9113</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
