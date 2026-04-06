@@ -1,23 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.2" />
+<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsAspireHost>true</IsAspireHost>
     <UserSecretsId>2c69d3ee-72b7-4283-8a8b-1dc86b762e21</UserSecretsId>
-    <NoWarn>$(NoWarn);ASPIREPROXYENDPOINTS001</NoWarn>
+    <NoWarn>$(NoWarn);ASPIREPROXYENDPOINTS001;NU1510;CS9113</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting" Version="9.5.2" />
-    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.2" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.8.0" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" Version="9.8.0" />
-    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.8.0" />
+    <PackageReference Include="Aspire.Hosting" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.PostgreSQL.Extensions" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" />
   </ItemGroup>
 
   <ItemGroup>

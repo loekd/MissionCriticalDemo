@@ -1,4 +1,4 @@
-cd /Users/loekd/projects/GH/MissionCriticalDemo/MissionCriticalDemo/radius
+pushd . && cd $(git rev-parse --show-toplevel) && cd MissionCriticalDemo/radius
 clear
 
 rad workspace list
@@ -9,7 +9,7 @@ rad deploy ./environments/production.bicep -g ateam
 rad deploy ./app.bicep --parameters environmentName=prod --parameters hostName=demo.loekd.com --parameters useHttps=true -g ateam -e prod
 
 #check api health
-curl https://demo.loekd.com/api/healthz
+#curl https://demo.loekd.com/api/healthz
 
 open -n -a "Microsoft Edge" "https://demo.loekd.com/dispatch"
 

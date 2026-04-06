@@ -56,7 +56,8 @@ var dispatchApi = builder
             {
                 AppId = "dispatchapi",
                 AppPort = 7079,
-                AppProtocol = "https",
+                AppProtocol = "https",  
+                AppMaxConcurrency = 1,
                 ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
                 SchedulerHostAddress = "", // Disable Dapr scheduler
                 PlacementHostAddress = "", // Disable Dapr placement
@@ -85,12 +86,12 @@ var plantApi = builder
                 AppId = "plantapi",
                 AppPort = 7071,
                 AppProtocol = "https",
+                AppMaxConcurrency = 1,
                 ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath),
                 SchedulerHostAddress = "", // Disable Dapr scheduler
                 PlacementHostAddress = "", // Disable Dapr placement
                 Config = $"{daprComponentsPath}/localconfig.yaml"
             });
-            
             opt.WithReference(plantStateStore);
             opt.WithReference(dispatchPubSub);
         })
